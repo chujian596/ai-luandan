@@ -245,7 +245,7 @@ td.cust{max-width:100px;overflow:hidden;text-overflow:ellipsis;text-align:left;w
   <section id="tab-split" class="card tab-panel" style="display:none">
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
       <span style="font-size:17px">阈值：</span>
-      <input id="splitTakeAll" type="number" placeholder="如100" style="width:120px;border:1px solid #ddd;border-radius:6px;padding:10px;font-size:18px" onchange="splitTakeAll=parseFloat(this.value)||0;saveSplitAll();var s2=document.getElementById('sideSplitTh');if(s2)s2.value=splitTakeAll;renderSplit();refreshFlySummary();">
+      <input id="splitTakeAll" type="number" placeholder="如100" style="width:120px;border:1px solid #ddd;border-radius:6px;padding:10px;font-size:18px" oninput="splitTakeAll=parseFloat(this.value)||0;saveSplitAll();try{localStorage.setItem('autoStable','0')}catch(e){};var s2=document.getElementById('sideSplitTh');if(s2)s2.value=splitTakeAll;flyThChanged();">
       <button class="btn primary" style="font-size:16px;padding:10px 20px" onclick="toggleSplit()">飞单统计</button>
     </div>
     <div id="splitSummary" style="font-size:17px;margin-bottom:6px;display:none"></div>
@@ -300,6 +300,7 @@ td.cust{max-width:100px;overflow:hidden;text-overflow:ellipsis;text-align:left;w
       <button class="btn" onclick="exportCSV()">导出统计CSV</button>
       <button class="btn" onclick="exportBackup()">备份JSON</button>
       <button class="btn" onclick="document.getElementById('importFile').click()">导入备份</button>
+      <button class="btn" onclick="openPasteImport()">粘贴导入</button>
       <button class="btn" style="color:#16a34a" onclick="restoreLastBackup()">一键恢复上次备份</button>
       <button class="btn" style="color:#cf1322" onclick="clearAll()">清空全部数据</button>
       <button class="btn" onclick="openSettings()">⚙ 设置</button>
@@ -319,6 +320,9 @@ td.cust{max-width:100px;overflow:hidden;text-overflow:ellipsis;text-align:left;w
       <button onclick="genStatement()" style="width:100%;padding:14px;border:1px solid #ddd;border-radius:12px;background:#fff;color:#333;font-size:16px;margin-bottom:10px">生成对账单</button>
       <button onclick="clearDrawRecord()" style="width:100%;padding:14px;border:1px solid #ddd;border-radius:12px;background:#fff;color:#FF9F0A;font-size:16px;margin-bottom:10px">撤销开奖记录</button>
       <button onclick="resetTheme()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--modalSeg,#2C2C2E);color:#FF453A;font-size:16px">恢复默认</button>
+      <div style="font-size:13px;color:var(--modalLabel,#8E8E93);margin:24px 0 10px 4px">地址</div>
+      <button onclick="gotoBackupSite()" style="width:100%;padding:14px;border:1px solid #ddd;border-radius:12px;background:#fff;color:#333;font-size:16px;margin-bottom:10px">打开备用地址</button>
+      <div style="font-size:12px;color:var(--modalLabel,#8E8E93);margin:0 4px 10px;line-height:1.7">主地址正常时点一次，备用地址会自动带上你的授权码。以后主地址打不开，切过去不用重输。<br>两边订单各自存在本机，不互通。</div>
     </div>
   </div>
 
@@ -412,7 +416,7 @@ td.cust{max-width:100px;overflow:hidden;text-overflow:ellipsis;text-align:left;w
         2. <b style="color:var(--modalText,#fff)">每天 21:33-21:35 自动获取</b>：号码逐个跳出，稳定后自动结算<br>
         3. 顶部时钟在开奖时段<b style="color:var(--modalText,#fff)">变红闪烁</b> = 正在刷新中<br>
         4. 彩球显示开奖号码（红/蓝/绿波），<b style="color:var(--modalText,#fff)">特号带金边</b><br>
-        5. 备用手动：输入 <b style="color:var(--modalText,#fff)">开</b> + 7个号码 结算<br>
+        5. 备用手动：输入 <b style="color:var(--modalText,#fff)">开 期号 六个平号 + 特号</b>，例 开318 10.36.02.09.26.37 + 38<br>
         6. 结算错了 → 设置 → <b style="color:var(--modalText,#fff)">撤销开奖记录</b> 重来
       </div>
 
@@ -460,7 +464,7 @@ td.cust{max-width:100px;overflow:hidden;text-overflow:ellipsis;text-align:left;w
       <div style="font-size:13px;line-height:1.9;color:var(--modalLabel,#8E8E93)">
         1. 数据存本机，并<b style="color:var(--modalText,#fff)">自动双备份</b>（localStorage + IndexedDB），清缓存不容易丢<br>
         2. <b style="color:var(--modalText,#fff)">备份JSON</b>：把全部数据导出成文件，建议每天存一份<br>
-        3. <b style="color:var(--modalText,#fff)">导入备份</b>：换手机/重装后选JSON文件恢复<br>
+        3. <b style="color:var(--modalText,#fff)">导入备份</b>：换手机/重装后选JSON文件恢复；手机选不了文件就用旁边的<b style="color:var(--modalText,#fff)">粘贴导入</b>，把备份内容直接粘进窗口<br>
         4. <b style="color:var(--modalText,#fff)">一键恢复上次备份</b>：误操作后快速回滚<br>
         5. <b style="color:var(--modalText,#fff)">清空全部数据</b>：全部清零且不可恢复，非必要别点
       </div>
@@ -536,27 +540,55 @@ async function restoreIfNeeded(){
   }
 }
 
-// 强制注销所有旧Service Worker，防止缓存旧版
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(function(regs){
-    regs.forEach(function(r){ r.unregister(); });
+// 离线缓存：联网打开过一次后，断网也能启动页面（sw.js 内部按版本清理旧缓存）
+if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
   });
 }
-caches && caches.keys && caches.keys().then(function(keys){
-  keys.forEach(function(k){ caches.delete(k); });
-});
 // 会员锁 - 每次打开都显示验证页
 var LOCK_KEY = 'app_lock_v1';
 var ADMIN_CODE = 'xg2024!oa';
+// 管理员码只在这两台自己的设备上有效，别人抄走这串码也用不了
+var OWNER_FP = ['780a7275fbd28a02', 'e5690e7d2be068d2'];
+function isOwnerDevice(){ try { return OWNER_FP.indexOf(fpOf(DEVICE_ID)) >= 0; } catch(e){ return false; } }
 // 设备白名单：从whitelist.json远程拉取
 // 强制版本检查
-var APP_VER = 'v58.70-Pro';
+var APP_VER = 'v58.97';
+try{ localStorage.removeItem('aiProPinVer'); }catch(e){}
+/* 版本归一化：比较时忽略 -Pro 等后缀，避免客户版与管理版互相误报更新 */
+function normVer(v){ return String(v||'').trim().replace(/-.*$/,'').trim(); }
 window.onerror = function(msg, url, line){
   var d = document.createElement('div');
   d.style.cssText='position:fixed;top:0;left:0;right:0;background:red;color:#fff;padding:10px;z-index:99999;font-size:12px;word-break:break-all';
   d.textContent = 'JS错误: ' + msg + ' 行:' + line;
   document.body.appendChild(d);
 };
+// 站点根地址：本地壳(file://)走 GitHub（1秒响应，Pages 这边常要 12-20 秒）
+function _siteBase(){
+  if(location.protocol === 'file:' || !location.hostname) return 'https://chujian596.github.io/ai-stats';
+  var p = location.pathname.replace(/\/[^\/]*$/, '');
+  return location.origin + p;
+}
+function _onlineURL(){
+  var isPro = /Pro/.test(APP_VER);
+  var base = _siteBase();
+  var isGH = base.indexOf('github.io') >= 0;
+  var path = isPro ? (isGH ? '/app-pro.html' : '/app-pro') : (isGH ? '/app.html' : '/app');
+  return base + path + '?v=' + Date.now();
+}
+// 手机里装的壳(file://)：先本地起，能连通就自动切到线上最新版，网页改动以后不用重装包
+(function(){
+  try{
+    if(location.protocol !== 'file:') return;
+    var base = 'https://chujian596.github.io/ai-stats';
+    var isPro = /Pro/.test(APP_VER);
+    var url = base + (isPro ? '/app-pro.html' : '/app.html');
+    fetch(url, {method:'HEAD', cache:'no-store'})
+      .then(function(r){ if(r.ok) location.replace(url + '?v=' + Date.now()); })
+      .catch(function(){});
+  }catch(e){}
+})();
 // 发现新版时：跳到带版本号的网址，硬绕开浏览器缓存（普通reload会拿旧缓存）
 function hardUpdateTo(v){
   // 先清除PWA缓存
@@ -571,12 +603,7 @@ function hardUpdateTo(v){
       names.forEach(function(name){ caches.delete(name); });
     });
   }
-  var ts = Date.now();
-  var url = location.pathname + '?v=' + encodeURIComponent(v) + '&_t=' + ts;
-  if(location.search && location.search.indexOf('v=')>=0){
-    url = location.pathname + location.search.replace(/([?&])v=[^&]*/,'$1v='+encodeURIComponent(v)).replace(/([?&])_t=[^&]*/,'$1_t='+ts);
-  }
-  location.replace(url);
+  location.replace(_onlineURL());
 }
 // 版本检查统一由下方 fetch 处理（仅提示、不自动跳转）
 // 自动同步版本号到标题栏，杜绝硬编码
@@ -585,11 +612,12 @@ document.addEventListener('DOMContentLoaded', function(){
   if(s) s.textContent = APP_VER;
 });
 // 版本检查：只提示，绝不自动跳转
-fetch('version.txt?t=' + Date.now(), {cache: 'no-cache'})
+fetch('version-client.txt?t=' + Date.now(), {cache: 'no-cache'})
   .then(r => r.text())
   .then(v => {
     v = v.trim();
-    if(v && v !== APP_VER){
+    if(!/^v?\d+\.\d{1,3}(-[A-Za-z]+)?$/.test(v)){ return; }
+    if(normVer(v) !== normVer(APP_VER)){
       var bar=document.createElement('div');
       bar.style.cssText='position:fixed;top:0;left:0;right:0;background:#333;color:#fff;padding:10px;text-align:center;z-index:99999;font-size:14px;cursor:pointer';
       bar.textContent='发现新版本 '+v+'，点这里更新';
@@ -626,7 +654,8 @@ function autoPayout(){
       specialNum = nums[1];
     }
   } else {
-    period = nums[0];
+    // 期号只在 >=50 时才认（号码最大 49）；不带期号时用页面已知最新期兜底
+    period = (nums[0] >= 50) ? nums[0] : '';
     var allNums = nums.filter(function(n){ return n >= 1 && n <= 49; });
     if(allNums.length < 1){ myAlert('没找到号码'); return; }
     // 最后7个是开奖号（6平特+1特号），自动跳过前面的日期
@@ -638,6 +667,10 @@ function autoPayout(){
     }
   }
 
+  // 没写期号：用已取到的最新期兜底，避免把第一个号码误当期号
+  if(!period){
+    if(typeof lastDraw !== 'undefined' && lastDraw && lastDraw.period) period = parseInt(lastDraw.period) || '';
+  }
   // 防止把更旧的期当成新开奖重复结算
   if(period){
     var settledP = parseInt(localStorage.getItem('lastDrawPeriod') || '0');
@@ -777,7 +810,7 @@ function autoPayout(){
     msg += (realNet >= 0 ? '实际盈利：' : '实际亏损：') + Math.abs(realNet).toFixed(2);
     // 自定义弹窗，标题"排行榜"
     var ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
     ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:320px;width:100%;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.2)">'
       + '<div style="padding:20px 20px 10px;font-size:16px;font-weight:700;text-align:center;color:#333">排行榜</div>'
       + '<div style="padding:0 20px 6px;font-size:15px;text-align:center;color:#333;line-height:1.6;white-space:pre-line">' + msg + '</div>'
@@ -837,23 +870,73 @@ renderAll();
   }
   document.getElementById('input').value = '';
 }
+/* 备用地址带码：从 ?sync= 接收授权码写入本域，随后清掉地址栏参数 */
+(function(){
+  try{
+    var m = (location.search||'').match(/[?&]sync=([^&]*)/);
+    if(!m) return;
+    var c = decodeURIComponent(m[1]).toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(c.length<6 || c.length>20) return;
+    if(c.charAt(0)!=='D') c = 'D' + c;
+    localStorage.setItem('fixed_device_id', c);
+    var q = (location.search||'').replace(/([?&])sync=[^&]*/,'').replace(/^&/,'?');
+    if(q==='?') q='';
+    try{ history.replaceState(null,'',location.pathname+q); }catch(e){}
+    var showTip = function(){
+      try{
+        var st = document.getElementById('syncTipStyle');
+        if(!st){ st = document.createElement('style'); st.id = 'syncTipStyle'; document.head.appendChild(st); }
+        st.textContent =
+          '#syncTipMask{position:fixed;left:0;top:0;right:0;bottom:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:rgba(0,0,0,.45)!important}'
+          + '#syncTipMask .st-card{border-radius:16px;padding:24px 20px;max-width:340px;width:100%;box-sizing:border-box;background:#fff!important}'
+          + '#syncTipMask .st-title{font-size:17px;font-weight:700;color:#1a1a1a!important;margin-bottom:12px}'
+          + '#syncTipMask .st-body{font-size:14px;line-height:1.9;color:#555!important}'
+          + '#syncTipMask .st-note{font-size:13px;line-height:1.8;color:#888!important;margin-top:14px}'
+          + '#syncTipMask .st-ok{width:100%;margin-top:18px;padding:13px;border:1px solid #ddd;border-radius:10px;background:#fff!important;color:#333!important;font-size:15px;font-weight:600;font-family:inherit}';
+        var d = document.createElement('div');
+        d.id = 'syncTipMask';
+        d.innerHTML = '<div class="st-card">'
+          + '<div class="st-title">已切到备用地址</div>'
+          + '<div class="st-body">授权码已经带过来了，这个地址可以直接用。以后主地址打不开，点一下就能打开这个。</div>'
+          + '<div class="st-note">两个地址的订单各自存在本机，不互通。当期建议只在一个地址里录。</div>'
+          + '<button class="st-ok" id="syncTipOk">知道了</button>'
+          + '</div>';
+        var ok = d.querySelector('#syncTipOk');
+        if(ok) ok.onclick = function(){ if(d.parentNode) d.parentNode.removeChild(d); };
+        document.body.appendChild(d);
+      }catch(e){}
+    };
+    if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', showTip); }
+    else { setTimeout(showTip, 120); }
+  }catch(e){}
+})();
 var DEVICE_WHITELIST = [];
 // 生成设备指纹（固定UUID，存在localStorage，不随屏幕分辨率变化）
 function activateCode(){
   var raw = (document.getElementById('lockCodeInput').value || '').trim().toUpperCase();
   var code = raw.replace(/[^A-Z0-9]/g, '');
-  if(!code){ alert('请输入授权码'); return; }
-  if(code.length < 6 || code.length > 20){ alert('授权码格式不对，应为 6-20 位字母数字'); return; }
+  if(!code){ myAlert('请输入授权码'); return; }
+  if(code.length < 6 || code.length > 20){ myAlert('授权码格式不对，应为 6-20 位字母数字'); return; }
   if(code.charAt(0) !== 'D') code = 'D' + code;
   try {
     localStorage.setItem('fixed_device_id', code);
     location.reload();
-  } catch(e) { alert('保存失败，请检查浏览器存储权限'); }
+  } catch(e) { myAlert('保存失败，请检查浏览器存储权限'); }
 }
 function resetCode(){
   if(!confirm('清除本机授权码，重新输入？')) return;
   try { localStorage.removeItem('fixed_device_id'); } catch(e){}
   location.reload();
+}
+/* 跳转到备用地址，并把当前授权码带过去（备用地址会自动写入） */
+function gotoBackupSite(){
+  var code = '';
+  try{ code = localStorage.getItem('fixed_device_id') || ''; }catch(e){}
+  var isCF = location.hostname.indexOf('pages.dev') >= 0;
+  var target = isCF ? 'https://chujian596.github.io/ai-stats/app.html'
+                    : 'https://aistats-9uo.pages.dev/app';
+  if(code){ target += (target.indexOf('?')>=0?'&':'?') + 'sync=' + encodeURIComponent(code); }
+  location.href = target;
 }
 /* SHA-256（纯JS，无依赖）：把授权码算成固定指纹，云端只存指纹不存明文码 */
 function sha256(str){
@@ -930,27 +1013,67 @@ var whitelistActive = false; // 白名单是否已启用
 // 设备级会员账本：每台设备各一套到期时间
 var MEMBERS = null;
 function applyMemberExpire(){
-  if(!MEMBERS) return;
-  var rec = MEMBERS[fpOf(DEVICE_ID)];
+  if(!MEMBERS || !DEVICE_ID) return;   // 云端没读到就沿用上次缓存，断网照样能用
+  var fp = fpOf(DEVICE_ID);
+  var rec = MEMBERS[fp];
+  var exp = 0;
   if(rec && rec.expire){
-    var exp = new Date(rec.expire + 'T23:59:59+08:00').getTime();
-    if(!isNaN(exp)){
-      lockData.expire = exp;
-      localStorage.setItem(LOCK_KEY, JSON.stringify({expire: exp, pwd: lockData.pwd || ''}));
-    }
+    var t = new Date(rec.expire + 'T23:59:59+08:00').getTime();
+    if(!isNaN(t)) exp = t;
   }
+  lockData.expire = exp;               // 名单里没有这台设备 → 立即失效（删了就是删了）
+  try { localStorage.setItem(LOCK_KEY, JSON.stringify({expire: exp, pwd: lockData.pwd || ''})); } catch(e){}
 }
-fetch('whitelist.json?t=' + Date.now())
-  .then(r => r.json())
-  .then(data => { DEVICE_WHITELIST = data.whitelist_fp || []; whitelistActive = DEVICE_WHITELIST.length > 0; })
-  .catch(() => { DEVICE_WHITELIST = []; whitelistActive = false; })
-  .then(function(){
-    return fetch('members.json?t=' + Date.now())
-      .then(r => r.json())
-      .then(d => { MEMBERS = d.devices || {}; })
-      .catch(() => { MEMBERS = null; });
-  })
-  .then(function(){ applyMemberExpire(); showLock(); reportDevice(); });
+function loadAccessData(cb){
+  var isGH = location.hostname.indexOf('github.io') >= 0;
+  var t = Date.now();
+  // 带超时的 fetch：网络被墙时连接可能「连上了但数据不来」，不超时就会永远卡住，
+  // 页面一直白屏、验证层不出来（这就是 App 打不开的真因）
+  function fetchT(url, ms){
+    return new Promise(function(resolve, reject){
+      var done = false, ctl = null;
+      try { if(typeof AbortController !== 'undefined') ctl = new AbortController(); } catch(e){}
+      var tid = setTimeout(function(){
+        if(done) return; done = true;
+        try { if(ctl) ctl.abort(); } catch(e){}
+        reject(new Error('timeout'));
+      }, ms || 4000);
+      fetch(url, ctl ? {signal: ctl.signal} : {}).then(function(r){
+        if(done) return; done = true; clearTimeout(tid); resolve(r);
+      }).catch(function(e){
+        if(done) return; done = true; clearTimeout(tid); reject(e);
+      });
+    });
+  }
+  function getFirst(urls, ok){
+    var i = 0, finished = false;
+    function finish(d){ if(finished) return; finished = true; ok(d); }
+    // 总兜底：不管网络怎么卡，最多等 6 秒就放行，绝不让人对着白屏等
+    setTimeout(function(){ finish(null); }, 6000);
+    (function next(){
+      if(i >= urls.length){ finish(null); return; }
+      if(finished) return;
+      fetchT(urls[i++], 4000).then(function(r){ if(!r.ok) throw new Error('x'); return r.json(); })
+        .then(function(d){ finish(d); })
+        .catch(function(){ next(); });
+    })();
+  }
+  var W = isGH ? ['whitelist.json?t=' + t] : ['https://chujian596.github.io/ai-stats/whitelist.json?t=' + t, 'whitelist.json?t=' + t];
+  var M = isGH ? ['members.json?t=' + t] : ['https://chujian596.github.io/ai-stats/members.json?t=' + t, 'members.json?t=' + t];
+  // 两份名单并行拉，各自超时，都到齐才回调 —— 断网时最多等 6 秒，不叠加
+  var _gw = false, _gm = false;
+  function _fin(){ if(_gw && _gm) cb(); }
+  getFirst(W, function(wd){
+    DEVICE_WHITELIST = (wd && wd.whitelist_fp) || [];
+    whitelistActive = DEVICE_WHITELIST.length > 0;
+    _gw = true; _fin();
+  });
+  getFirst(M, function(md){
+    MEMBERS = (md && md.devices) ? md.devices : null;
+    _gm = true; _fin();
+  });
+}
+loadAccessData(function(){ applyMemberExpire(); showLock(); reportDevice(); });
 // 自动上报设备码到邮箱（未授权设备每天报一次，已授权不报）
 function reportDevice(){
   if(!DEVICE_ID) return; // 还没输码，不上报
@@ -960,7 +1083,7 @@ function reportDevice(){
   var ua = navigator.userAgent || '';
   if(/Linux x86_64|Windows NT|Macintosh|CrOS/i.test(ua)) return;
   var fp = fpOf(DEVICE_ID);
-  var deviceAllowed = (MEMBERS && MEMBERS[fp]) ? true : (!whitelistActive || DEVICE_WHITELIST.indexOf(fp) >= 0);
+  var deviceAllowed = MEMBERS ? !!MEMBERS[fp] : (!whitelistActive || DEVICE_WHITELIST.indexOf(fp) >= 0);  // 名单读到就以名单为准
   if(deviceAllowed) return; // 已授权的不上报，不打扰
   var lastReport = parseInt(localStorage.getItem('lastReport_' + DEVICE_ID) || '0');
   var now = Date.now();
@@ -978,14 +1101,15 @@ function reportDevice(){
     })
   }).catch(function(){});
 }
-var BAKE_EXPIRE;
-var savedLock = JSON.parse(localStorage.getItem(LOCK_KEY) || '{}');
-BAKE_EXPIRE = new Date('2026-11-30T00:00:00+08:00').getTime();
-localStorage.setItem(LOCK_KEY, JSON.stringify({expire: BAKE_EXPIRE, pwd: savedLock.pwd || ''}));
-var lockData = { pwd: savedLock.pwd || '', expire: BAKE_EXPIRE };
+// 默认没有任何授权：真实到期时间只由云端名单决定；断网时沿用上一次缓存的时间
+var BAKE_EXPIRE = 0;
+var savedLock = {};
+try { savedLock = JSON.parse(localStorage.getItem(LOCK_KEY) || '{}'); } catch(e){ savedLock = {}; }
+var lockData = { pwd: savedLock.pwd || '', expire: savedLock.expire || 0 };
 
 function showLock(){
-  if(new URLSearchParams(location.search).get('nock')==='1'){ document.getElementById('lockScreen').style.display='none'; return; }
+  var __local = (location.hostname === '127.0.0.1' || location.hostname === 'localhost');
+  if(__local && new URLSearchParams(location.search).get('nock')==='1'){ document.getElementById('lockScreen').style.display='none'; return; }
   // 本机还没有授权码 → 让他先输入
   if(!DEVICE_ID){
     document.getElementById('lockCodeWrap').style.display = 'block';
@@ -1012,7 +1136,7 @@ function showLock(){
   document.getElementById('lockMsg').innerHTML = timeTxt + '<br>到期：' + new Date(lockData.expire).toLocaleString() + '<br><span style="font-size:12px;color:#999">设备码：<b style="color:#333;font-size:14px">' + DEVICE_ID + '</b></span>';
   // 设备白名单检查（白名单为空时不限制）
   var fp = fpOf(DEVICE_ID);
-  var deviceAllowed = (MEMBERS && MEMBERS[fp]) ? true : (!whitelistActive || DEVICE_WHITELIST.indexOf(fp) >= 0);
+  var deviceAllowed = MEMBERS ? !!MEMBERS[fp] : (!whitelistActive || DEVICE_WHITELIST.indexOf(fp) >= 0);  // 名单读到就以名单为准
   if(!deviceAllowed){
     document.getElementById('lockPwdWrap').style.display = '';
     document.getElementById('lockEnterBtn').style.display = 'none';
@@ -1043,23 +1167,23 @@ function showLock(){
 function unlock(){
   var p = document.getElementById('lockPwd').value;
   // 管理员码：延期30天 + 绕过设备检查
-  if(p === ADMIN_CODE){
+  if(p === ADMIN_CODE && isOwnerDevice()){
     lockData.expire = Date.now() + 30 * 86400000;
     localStorage.setItem(LOCK_KEY, JSON.stringify(lockData));
     document.getElementById('lockScreen').style.display = 'none';
     return;
   }
   // 设备未授权
-  if(!(MEMBERS && MEMBERS[fpOf(DEVICE_ID)]) && whitelistActive && DEVICE_WHITELIST.indexOf(fpOf(DEVICE_ID)) < 0){
-    alert('此设备未授权，设备码：' + DEVICE_ID);
+  if(MEMBERS ? !MEMBERS[fpOf(DEVICE_ID)] : (whitelistActive && DEVICE_WHITELIST.indexOf(fpOf(DEVICE_ID)) < 0)){
+    myAlert('此设备未授权，设备码：' + DEVICE_ID);
     return;
   }
   // 没密码不能进，到期后必须输管理员码
-  if(!lockData.pwd){ alert('会员已到期，请联系管理员'); return; }
+  if(!lockData.pwd){ myAlert('会员已到期，请联系管理员'); return; }
   if(p === lockData.pwd){
     document.getElementById('lockScreen').style.display = 'none';
   } else {
-    alert('密码错误');
+    myAlert('密码错误');
   }
 }
 function skipLock(){ document.getElementById('lockScreen').style.display = 'none'; }
@@ -1659,9 +1783,9 @@ function renderSplitSide(){
   if(!box) return;
   let h = '<div id="splitBody" style="display:none">';
   h += '<div style="display:flex;gap:3px;align-items:center;margin-bottom:3px">';
-  h += `<span style="font-size:13px;color:#666;white-space:nowrap">特号</span><input id="sideSplitTh" type="number" placeholder="如100" value="${splitTakeAll||''}" onchange="splitTakeAll=parseFloat(this.value)||0;saveSplitAll();var s2=document.getElementById('splitTakeAll');if(s2)s2.value=splitTakeAll;refreshFlySummary();" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:14px;min-width:0">`;
-  h += `<span style="font-size:13px;color:#666;white-space:nowrap">平特</span><input id="sidePteTh" type="number" value="${pteFlyTakeAll||0}" onchange="pteFlyTakeAll=parseFloat(this.value)||0;try{localStorage.setItem('pteFlyTakeAll',pteFlyTakeAll)}catch(e){};var s2=document.getElementById('pteFlyInput');if(s2)s2.value=pteFlyTakeAll;refreshFlySummary();" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:14px;min-width:0">`;
-  h += `<span style="font-size:13px;color:#666;white-space:nowrap">连肖</span><input id="sideLxTh" type="number" value="${lxFlyAmt||0}" onchange="lxFlyAmt=parseFloat(this.value)||0;try{localStorage.setItem('lxFlyAmt',lxFlyAmt)}catch(e){};var s2=document.getElementById('lxFlyInput');if(s2)s2.value=lxFlyAmt;refreshFlySummary();" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:14px;min-width:0">`;
+  h += `<span style="font-size:13px;color:#666;white-space:nowrap">特号</span><input id="sideSplitTh" type="number" placeholder="如100" value="${splitTakeAll||''}" oninput="splitTakeAll=parseFloat(this.value)||0;saveSplitAll();try{localStorage.setItem('autoStable','0')}catch(e){};var s2=document.getElementById('splitTakeAll');if(s2&&s2!==this)s2.value=splitTakeAll;flyThChanged();" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:14px;min-width:0">`;
+  h += `<span style="font-size:13px;color:#666;white-space:nowrap">平特</span><input id="sidePteTh" type="number" value="${pteFlyTakeAll||0}" oninput="pteFlyTakeAll=parseFloat(this.value)||0;try{localStorage.setItem('pteFlyTakeAll',pteFlyTakeAll)}catch(e){};var s2=document.getElementById('pteFlyInput');if(s2)s2.value=pteFlyTakeAll;flyThChanged();" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:14px;min-width:0">`;
+  h += `<span style="font-size:13px;color:#666;white-space:nowrap">连肖</span><input id="sideLxTh" type="number" value="${lxFlyAmt||0}" oninput="lxFlyAmt=parseFloat(this.value)||0;try{localStorage.setItem('lxFlyAmt',lxFlyAmt)}catch(e){};var s2=document.getElementById('lxFlyInput');if(s2)s2.value=lxFlyAmt;flyThChanged();" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:6px;font-size:14px;min-width:0">`;
   h += '</div>';
   h += '<div style="display:flex;gap:3px;margin-bottom:3px">';
   h += '<button onclick="showAllFlyDir()" style="flex:1;border:1px solid #ccc;background:#fff;color:#333;border-radius:6px;padding:8px;font-size:14px;font-weight:600">飞单目录</button>';
@@ -1694,6 +1818,8 @@ function renderSplitSide(){
   h += '</div>'; // close splitBody
   box.innerHTML = h;
   renderSideCustPay();
+  // 侧栏一渲染就把阈值和飞单总额填上，不用等用户改数字
+  try { refreshFlySummary(); } catch(e){}
 }
 
 function renderSideCustPay(){
@@ -2111,6 +2237,15 @@ function grandOrderTotal(){
   });});
   return g;
 }
+// 阈值改动后实时重算（防连续按键抖动）
+var _flyThTimer = null;
+function flyThChanged(){
+  clearTimeout(_flyThTimer);
+  _flyThTimer = setTimeout(function(){
+    try { renderRisk(); } catch(e){}
+    try { refreshFlySummary(); } catch(e){}
+  }, 150);
+}
 function refreshFlySummary(){
   try {
     const total = grandOrderTotal();
@@ -2118,8 +2253,10 @@ function refreshFlySummary(){
     const sumEl = document.getElementById('sideSplitSummary');
     if(sumEl){
       sumEl.innerHTML =
-        '总单 <b>' + total.toFixed(0) + '</b> | 应飞总额 <b style="color:#cf1322">' + _r.totalFly.toFixed(0) + '</b><br>' +
-        '已飞 ' + _r.already.toFixed(0) + ' | 本轮应飞 <b style="color:#cf1322;font-size:16px">' + _r.thisRound.toFixed(0) + '</b>';
+        '<div style="display:flex;justify-content:space-between;font-size:13px;color:#666;padding-bottom:3px;border-bottom:1px solid #eee"><span>当前阈值</span>'
+          + '<span style="color:#333">特号 <b>' + (splitTakeAll||0) + '</b> ｜ 平特 <b>' + (pteFlyTakeAll||0) + '</b> ｜ 连肖 <b>' + (lxFlyAmt||0) + '</b></span></div>'
+        + '<div style="padding-top:3px">总单 <b>' + total.toFixed(0) + '</b> ｜ 总飞出去 <b style="color:#cf1322">' + _r.totalFly.toFixed(0) + '</b></div>'
+        + '<div>已飞 ' + _r.already.toFixed(0) + ' ｜ 本轮应飞 <b style="color:#cf1322;font-size:16px">' + _r.thisRound.toFixed(0) + '</b></div>';
     }
     var box = document.getElementById('sideSplitResult');
     if(currentFlyGroup){ showGroupDetail(currentFlyGroup); }
@@ -2489,7 +2626,9 @@ function sideSplitCalc(){
   const total = keys.reduce((s,k) => s + sales[k], 0);
   const _r = getThisRoundFly();
   document.getElementById('sideSplitSummary').innerHTML =
-    `总单 <b>${total.toFixed(0)}</b> | 应飞总额 <b style="color:#cf1322">${_r.totalFly.toFixed(0)}</b><br>已飞 ${_r.already.toFixed(0)} | 本轮应飞 <b style="color:#cf1322;font-size:16px">${_r.thisRound.toFixed(0)}</b>`;
+    `<div style="display:flex;justify-content:space-between;font-size:13px;color:#666;padding-bottom:3px;border-bottom:1px solid #eee"><span>当前阈值</span><span style="color:#333">特号 <b>${splitTakeAll||0}</b> ｜ 平特 <b>${pteFlyTakeAll||0}</b> ｜ 连肖 <b>${lxFlyAmt||0}</b></span></div>`
+    + `<div style="padding-top:3px">总单 <b>${total.toFixed(0)}</b> ｜ 总飞出去 <b style="color:#cf1322">${_r.totalFly.toFixed(0)}</b></div>`
+    + `<div>已飞 ${_r.already.toFixed(0)} ｜ 本轮应飞 <b style="color:#cf1322;font-size:16px">${_r.thisRound.toFixed(0)}</b></div>`;
   // 明细表
   let h = '<div style="font-size:14px">';
   h += '<div style="display:flex;align-items:center;padding:8px 4px;background:#f0f0f0;font-weight:700;font-size:13px;border-radius:6px 6px 0 0">';
@@ -2530,7 +2669,7 @@ function toggleSplit(){
   document.getElementById('splitSummary').style.display = splitVisible ? '' : 'none';
   document.getElementById('splitCopyWrap').style.display = splitVisible ? '' : 'none';
   document.getElementById('splitTableWrap').style.display = splitVisible ? '' : 'none';
-  if(splitVisible) calcSplit();
+  if(splitVisible){ calcSplit(); try{ refreshFlySummary(); }catch(e){} }
 }
 function calcSplit(){
   const stInput = document.getElementById('splitTakeAll');
@@ -3608,23 +3747,37 @@ function autoFetchDraw(retry){
     autoPayout();
   }
   var tries = retry || 0;
-  // 只读同源快照：不跨域、不受代理干扰；失败自动重试，不长时间卡住
-  fetch('draw-latest.json?t=' + Date.now(), {cache: 'no-store'})
-    .then(function(r){ if(!r.ok) throw new Error('snapshot missing'); return r.json(); })
-    .then(function(d){
-      var snap = d && d.macao;
-      if(!snap || !snap.numbers || snap.numbers.length < 7) throw new Error('snapshot empty');
-      done();
-      applyMacao({ draw: snap.draw, winner_numbers: snap.numbers });
-    })
-    .catch(function(){
+  // 依次尝试：同源快照 → 主站远程 → 备用站远程（离线 APK 靠后两个拿开奖）
+  // 首选同域接口：Cloudflare 边缘实时抓，数据总是最新；后面几个是离线/备网兜底
+  var sources = ['/api/draw',
+                 'draw-latest.json',
+                 'https://chujian596.github.io/ai-stats/draw-latest.json',
+                 'https://chujian596.github.io/ai-luandan/draw-latest.json'];
+  var idx = 0;
+  function tryNext(){
+    if(idx >= sources.length){
       if(tries < 2){
+        idx = 0;
         setTimeout(function(){ autoFetchDraw(tries + 1); }, 1500);
         return;
       }
       done();
-      myAlert('暂时取不到开奖数据（服务器正在同步，通常一两分钟）。\n请稍后再点一次，或手动粘贴，例如：开318 10.36.02.09.26.37.38');
-    });
+      myAlert('暂时取不到开奖数据（服务器正在同步，通常一两分钟）。\n请稍后再点一次，也可以手动粘贴。\n\n写法：开 期号 六个平号 + 特号\n例子：开318 10.36.02.09.26.37 + 38\n（最后一个数字就是特号）');
+      return;
+    }
+    var u = sources[idx++];
+    var sep = u.indexOf('?') >= 0 ? '&' : '?';
+    fetch(u + sep + 't=' + Date.now(), {cache: 'no-store'})
+      .then(function(r){ if(!r.ok) throw new Error('x'); return r.json(); })
+      .then(function(d){
+        var snap = d && d.macao;
+        if(!snap || !snap.numbers || snap.numbers.length < 7) throw new Error('empty');
+        done();
+        applyMacao({ draw: snap.draw, winner_numbers: snap.numbers });
+      })
+      .catch(function(){ tryNext(); });
+  }
+  tryNext();
 }
 // 号码颜色：红/蓝/绿
 function ballColor(n){
@@ -3666,14 +3819,19 @@ function renderLiveBalls(nums, specialFlag){
 }
 // 下拉刷新 / 点「刷新」：收起号码 + 检查线上有没有新版，不碰开奖数据
 function refreshPage(){
+  // 下拉/点刷新：重算一遍页面显示（订单、阈值、持仓、飞单都跟着重算），再去查有没有新版
   hideLiveBalls();
+  try { renderAll(); } catch(e){}
+  try { if(typeof renderRisk === 'function') renderRisk(); } catch(e){}
+  try { if(typeof renderSplitSide === 'function') renderSplitSide(); } catch(e){}
   var btn = document.getElementById('refreshBtn');
   if(btn) btn.textContent = '检查中…';
-  fetch('version.txt?t=' + Date.now(), {cache:'no-store'})
-    .then(function(r){ return r.text(); })
+  fetch('version-client.txt?t=' + Date.now(), {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
     .then(function(v){
       var remote = String(v || '').trim();
-      if(remote && remote !== APP_VER){
+      if(!/^v?\d/.test(remote) || remote.length > 20) throw new Error('not a version file');
+      if(remote && normVer(remote) !== normVer(APP_VER) && normVer(remote) !== normVer(localStorage.getItem('aiNoRemindVer') || '')){
         if(btn) btn.textContent = '刷新';
         myChoice('有新版本',
           '线上已更新到 <b>' + remote + '</b><br>你现在用的是 <b>' + APP_VER + '</b>',
@@ -3681,10 +3839,10 @@ function refreshPage(){
           function(i){
             if(i === 0){
               localStorage.removeItem('aiProPinVer');
-              location.replace('./app.html?v=' + Date.now());
+              location.replace(_onlineURL());
             } else if(i === 1){
-              localStorage.setItem('aiProPinVer', APP_VER);
-              myAlert('已锁定 ' + APP_VER + '。\n以后打开都停在这个版本，不会再自动变。\n想换回最新版：点刷新，选「现在更新到最新」。');
+              localStorage.setItem('aiNoRemindVer', normVer(APP_VER));
+              myAlert('已设为不再提醒。\n新版照样会自动生效，只是不再弹窗问你要不要更新。');
             }
           });
       } else if(btn){
@@ -3696,8 +3854,11 @@ function refreshPage(){
       }
     })
     .catch(function(){
-      if(btn) btn.textContent = '刷新';
-      myAlert('检查更新失败（网络暂时不通）。\n不影响录单，过一会儿再点刷新即可。');
+      // 版本检查只是顺带的事，连不上就安静收场，不打断录单
+      if(btn){
+        btn.textContent = '没连上·稍后再试';
+        setTimeout(function(){ if(btn) btn.textContent = '刷新'; }, 2000);
+      }
     });
 }
 // 收起号码球（开奖记录和已结算的数据都不动）
@@ -3765,10 +3926,38 @@ window.onload = function(){
     stY = e.touches[0].clientY;
     pulled = false;
   }, {passive: true});
+  // 改进版：必须在"已经滚到最顶"往下拖才认，拖到 110px 松手就刷新，并给一条可见提示
+  var armed = false, tip = null;
+  function pullTip(){
+    if(tip) return tip;
+    tip = document.getElementById('pullTip');
+    if(!tip){
+      tip = document.createElement('div');
+      tip.id = 'pullTip';
+      tip.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:#222;color:#fff;text-align:center;font-size:13px;padding:8px 0;transform:translateY(-110%);transition:transform .16s;pointer-events:none;letter-spacing:.5px';
+      tip.textContent = '下拉刷新';
+      document.body.appendChild(tip);
+    }
+    return tip;
+  }
+  document.addEventListener('touchmove', function(e){
+    if(!e.touches || !e.touches[0]) return;
+    var sc = document.scrollingElement || document.documentElement;
+    var top = window.scrollY || (sc && sc.scrollTop) || 0;
+    if(top > 5){ armed = false; return; }
+    var d = e.touches[0].clientY - stY;
+    if(d > 40){
+      var t = pullTip();
+      t.textContent = d > 110 ? '松手刷新' : '下拉刷新';
+      t.style.transform = 'translateY(0)';
+    }
+    armed = d > 110;
+  }, {passive: true});
   document.addEventListener('touchend', function(e){
-    if(pulled) return;
-    var diff = e.changedTouches[0].clientY - stY;
-    if(window.scrollY < 60 && diff > 110){ pulled = true; refreshPage(); }
+    var t = pullTip();
+    t.style.transform = 'translateY(-110%)';
+    if(pulled){ return; }
+    if(armed){ pulled = true; armed = false; refreshPage(); }
   }, {passive: true});
 };
 
@@ -3776,7 +3965,7 @@ function handleSave(){
   var raw0 = document.getElementById('input').value.trim();
   if(raw0){
     // 明确开奖：以"开"开头，直接结算
-    if(/^开[].?/.test(raw0) || /^开奖/.test(raw0)){
+    if(/^开[\s.．·,，、:：]*\d/.test(raw0) || /^开奖/.test(raw0)){
       autoPayout(); return;
     }
   }
@@ -3834,7 +4023,7 @@ function showFixDialog(rawLine, msg){
     pingLine = '平特' + zods.join('') + '各' + price + '米';
   }
   var ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:340px;width:100%;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.2)">'
     + '<div style="padding:18px 20px 6px;font-size:16px;font-weight:700;text-align:center;color:#333">这行没认出来</div>'
     + '<div style="padding:0 20px 8px;font-size:12px;color:#999;text-align:center;word-break:break-all">' + src + '</div>'
@@ -3863,6 +4052,9 @@ function showFixDialog(rawLine, msg){
   ov.querySelector('#fxCancel').onclick = function(){ ov.remove(); };
   return true;
 }
+var MANUAL_TYPES = [['num','号码'],['tezod','特肖'],['ping','平特肖'],['lian','连肖'],['wave','波色'],['sd','单双'],['big','大小'],['he','合数单双'],['head','头数'],['tail','尾数'],['ez','二中二'],['sz','三中三']];
+var MT_HINT = {num:'如 05 17 28',tezod:'如 鼠龙马',ping:'如 兔蛇',lian:'如 鼠龙蛇',wave:'如 红波大',sd:'单 / 双',big:'大 / 小',he:'合数单 / 合数双',head:'0-4',tail:'0-9',ez:'两个号 如 05 17',sz:'三个号 如 05 17 28'};
+var _mtType = 'num';
 function _mtLabel(t){ for(var i=0;i<MANUAL_TYPES.length;i++){ if(MANUAL_TYPES[i][0]===t) return MANUAL_TYPES[i][1]; } return t; }
 function buildManualCodes(type, val){
   val = String(val||'');
@@ -3916,7 +4108,7 @@ function openManualEntry(){
   var old = document.getElementById('manualOverlay'); if(old) old.remove();
   var ov = document.createElement('div');
   ov.id = 'manualOverlay';
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:flex-end;justify-content:center';
+  ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:flex-end;justify-content:center';
   ov.innerHTML = '<div style="background:#fff;border-radius:16px 16px 0 0;max-width:420px;width:100%;max-height:92vh;overflow-y:auto;padding:18px 16px 26px;color:#333">'
     + '<div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px">手动录入（应急）</div>'
     + '<div style="font-size:12px;color:#888;text-align:center;margin-bottom:14px;line-height:1.6">识别不了时用这个：选类型 → 填内容 → 填金额，系统不再猜</div>'
@@ -3932,6 +4124,7 @@ function openManualEntry(){
     + '<button id="mtSave" style="flex:1;padding:12px;border:none;border-radius:10px;background:#1a1a1a;color:#fff;font-size:15px;font-weight:700">保存</button>'
     + '</div></div>';
   document.body.appendChild(ov);
+  mtKbFix(ov);
   var grid = document.getElementById('mtGrid');
   MANUAL_TYPES.forEach(function(t){
     var b = document.createElement('button');
@@ -3956,6 +4149,71 @@ function openManualEntry(){
   document.getElementById('mtCancel').onclick = function(){ ov.remove(); };
   document.getElementById('mtSave').onclick = function(){ manualSave(ov); };
   updateManualPreview();
+}
+/* 键盘适配：安卓 WebView 的 adjustResize 在弹层上常不生效，用 visualViewport 把弹层顶到键盘上方 */
+
+/* 键盘高度由 App 原生层量好传进来（安卓 WebView 不会随键盘缩小自身视口，页面自己感知不到） */
+window.__kbFix = function(kb){
+  try{
+    kb = Number(kb) || 0;
+    window.__kbFixActive = kb > 0;
+    var vv = window.visualViewport;
+    if(vv && (window.innerHeight - vv.height) > 40){ kb = 0; }   // 视口已随键盘缩小，无需额外补偿
+    var ov = document.getElementById('manualOverlay');
+    if(!ov) return;
+    ov.style.top = '0';
+    ov.style.bottom = kb + 'px';
+    var box = ov.firstElementChild;
+    if(box){
+      box.style.maxHeight = Math.max(220, window.innerHeight - kb - 16) + 'px';
+    }
+  }catch(e){}
+};
+function mtKbFix(ov){
+  var box = ov.firstElementChild;
+  function sync(){
+    var vv = window.visualViewport;
+    var kb = 0;
+    if(vv){ kb = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)); }
+    else { kb = Math.max(0, window.innerHeight - (document.documentElement.clientHeight || window.innerHeight)); }
+    ov.style.bottom = kb + 'px';
+    ov.style.top = '0';
+    if(box){
+      var vis = (vv ? vv.height : window.innerHeight) - 16;
+      box.style.maxHeight = Math.max(220, vis) + 'px';
+      if(kb > 0){ try{ box.scrollTop = 0; }catch(e){} }
+    }
+  }
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', sync);
+    window.visualViewport.addEventListener('scroll', sync);
+  }
+  window.addEventListener('resize', sync);
+  setTimeout(sync, 60); setTimeout(sync, 260); setTimeout(sync, 520);
+  ['mtVal','mtPrice','mtMode'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('focus', function(){
+      setTimeout(function(){
+        try{ el.scrollIntoView({block:'center'}); }catch(e){}
+        sync();
+        // 兜底：App 没推键盘高度、浏览器也没缩小视口时，直接把弹层抬到屏幕上部
+        var vv = window.visualViewport;
+        var shrink = vv ? (window.innerHeight - vv.height) : 0;
+        if(shrink < 40 && !window.__kbFixActive){
+          var lift = Math.round(window.innerHeight * 0.42);
+          ov.style.bottom = lift + 'px';
+          if(box) box.style.maxHeight = Math.max(200, window.innerHeight - lift - 16) + 'px';
+        }
+      }, 380);
+    });
+    el.addEventListener('blur', function(){
+      setTimeout(function(){
+        sync();
+        if(!window.__kbFixActive){ ov.style.bottom = '0px'; if(box) box.style.maxHeight = Math.max(220, window.innerHeight - 16) + 'px'; }
+      }, 220);
+    });
+  });
 }
 function manualSave(ov){
   var val = (document.getElementById('mtVal')||{}).value || '';
@@ -4040,7 +4298,7 @@ function scanMultiItems(text){
 function showMultiDlg(items, text){
   var ans = items.map(function(){ return null; });
   var ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
   var rows = '';
   items.forEach(function(it, i){
     var unit = (it.kind === 'ping') ? '肖' : '个号';
@@ -4163,7 +4421,7 @@ function doSave(overrideText){
     } else if(pingMatch && !/[数号]/.test(pingMatch[2])){
       const pz = pingMatch[1], pp = parseFloat(pingMatch[3]);
       const ov = document.createElement('div');
-      ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+      ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
       ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:340px;width:100%;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.2)">'
         + '<div style="padding:20px 20px 10px;font-size:16px;font-weight:700;text-align:center;color:#333">平特' + pz + ' ' + pp + '元，怎么算？</div>'
         + '<div style="border-top:1px solid #eee;margin-top:10px">'
@@ -4213,7 +4471,7 @@ function doSave(overrideText){
         let numCount = 0;
         zods.split('').forEach(z => { numCount += ((NUM2ZODIAC_REV[z] || []).length); });
         const ov = document.createElement('div');
-        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+        ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
         ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:340px;width:100%;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.2)">'
           + '<div style="padding:20px 20px 10px;font-size:16px;font-weight:700;text-align:center;color:#333">特肖' + zods + ' ' + price + '元，怎么算？</div>'
           + '<div style="border-top:1px solid #eee;margin-top:10px">'
@@ -4303,7 +4561,7 @@ function doSave(overrideText){
           const numCount = prodDef.links.length;
           window.__ambigAbort = true;
           const ov = document.createElement('div');
-          ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+          ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
           ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:340px;width:100%;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.2)">'
             + '<div style="padding:20px 20px 10px;font-size:16px;font-weight:700;text-align:center;color:#333">请选择注单方式</div>'
             + '<div style="padding:0 20px 16px;font-size:14px;text-align:center;color:#666">' + canonical + ' ' + price + '元（' + numCount + '个号）</div>'
@@ -5335,6 +5593,13 @@ function copyAllOrders(){
   navigator.clipboard.writeText(text).then(()=>myAlert('已复制汇总'));
 }
 
+// 持仓分析展开状态：重算时不重置，避免点一下/改个阈值就自动收回去
+var riskBoxOpen = false;
+function toggleRiskBox(){
+  riskBoxOpen = !riskBoxOpen;
+  var e = document.getElementById('riskAnalysisBox');
+  if(e) e.style.display = riskBoxOpen ? '' : 'none';
+}
 function renderRisk(){
   const box = document.getElementById('riskBody');
   if(!box) return;
@@ -5525,8 +5790,8 @@ function renderRisk(){
     h += `<div style="font-weight:700;font-size:18px">实际净盈亏：<b style="color:${actualNet>=0?'#166534':'#cf1322'}">${actualNet>=0?'+':''}${actualNet.toFixed(0)}</b></div>`;
     h += `</div>`;
   }
-  h += `<div onclick="var e=document.getElementById('riskAnalysisBox');e.style.display=e.style.display==='none'?'':'none'" style="padding:8px 12px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:8px;margin:8px 0 4px;cursor:pointer;font-size:14px;font-weight:600">持仓分析${splitTakeAll>0?'（飞单后）':'（全飞）'}${lastDraw&&lastDraw.specialNum?'（已开奖）':'（开奖前预测）'} ▶</div>`;
-  h += `<div id="riskAnalysisBox" style="display:none;margin:6px 0;padding:12px;background:#f8f9fa;border:1px solid #e5e5e5;border-radius:8px;font-size:14px;line-height:1.8">`;
+  h += `<div onclick="toggleRiskBox()" style="padding:8px 12px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:8px;margin:8px 0 4px;cursor:pointer;font-size:14px;font-weight:600">持仓分析${splitTakeAll>0?'（飞单后）':'（全飞）'}${lastDraw&&lastDraw.specialNum?'（已开奖）':'（开奖前预测）'} ▶</div>`;
+  h += `<div id="riskAnalysisBox" style="display:${riskBoxOpen?'':'none'};margin:6px 0;padding:12px;background:#f8f9fa;border:1px solid #e5e5e5;border-radius:8px;font-size:14px;line-height:1.8">`;
   // 特号独立盈亏
   const specWorstNet = specKept - worstKeptBet*payMult;
   h += `<div style="margin-top:6px;padding:6px 8px;background:#fff;border:1px solid #e5e5e5;border-radius:6px;font-size:13px;color:${worstNet>=0?'#16a34a':riskPct<=30?'#e67e22':'#cf1322'}">${verdict}</div>`;
@@ -5639,7 +5904,7 @@ function renderRisk(){
     h += `<div onclick="toggleOd('riskPteTable',this)" style="padding:8px 12px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:8px;margin:8px 0 4px;cursor:pointer;font-size:14px;font-weight:600">平特持仓 ▶</div>`;
     h += `<div id="riskPteTable" style="display:none">`;
     h += `<table style="width:100%;border-collapse:collapse;font-size:13px">`;
-    h += `<tr style="color:#333"><th style="text-align:left;padding:3px">生肖</th><th style="text-align:right;padding:3px">下注</th><th style="text-align:right;padding:3px">飞了</th><th style="text-align:right;padding:3px">自留赔</th></tr>`;
+    h += `<tr style="color:#333"><th style="text-align:left;padding:3px">生肖</th><th style="text-align:right;padding:3px">下注</th><th style="text-align:right;padding:3px">飞了</th><th style="text-align:right;padding:3px">自留净赔</th></tr>`;
     const drawZSet = (lastDraw && lastDraw.specialNum) ? new Set([...(lastDraw.regularNums||[]), lastDraw.specialNum].map(n=>NUM2ZODIAC[n]).filter(Boolean)) : null;
     pteEntries.forEach(([z,amt]) => {
       const mult = z==='马' ? 1.8 : payMultSingle;
@@ -5647,7 +5912,11 @@ function renderRisk(){
       const fly = Math.max(0, amt - kept);
       const hit = drawZSet ? drawZSet.has(z) : null;
       const rowBg = hit ? 'background:#d4edda;' : (hit===false ? 'opacity:0.5;' : '');
-      const payoutStr = kept===0 ? '全飞' : (hit===true ? `${(kept*mult).toFixed(0)} ←赔` : (hit===false ? '未中' : (kept*mult).toFixed(0)));
+      const grossPay = kept * mult, netPay = grossPay - kept;   // 净赔 = 毛赔付 - 已收本金
+      const payoutStr = kept===0 ? '全飞'
+        : (hit===true ? `${netPay.toFixed(0)} ←净赔`
+        : (hit===false ? '未中'
+        : `${netPay.toFixed(0)}<span style="font-size:10px;color:#999;font-weight:400"> 毛${grossPay.toFixed(0)}</span>`));
       const payoutColor = kept===0 ? '#999' : (hit===true ? '#155724' : (hit===false ? '#999' : '#cf1322'));
       h += `<tr style="border-bottom:1px solid #f5f5f5;${rowBg}"><td style="padding:3px">${z}${hit===true?' ✓':''}</td><td style="text-align:right;padding:3px">${amt.toFixed(0)}</td><td style="text-align:right;padding:3px;color:${fly>0?'#cf1322':'#999'}">${fly>0?fly.toFixed(0):'-'}</td><td style="text-align:right;padding:3px;color:${payoutColor};font-weight:${hit===true?'700':'400'}">${payoutStr}</td></tr>`;
     });
@@ -5698,10 +5967,13 @@ function renderRisk(){
   const specialPayout = worstKeptBet * payMult;
   const afterFlyPayout = specialPayout + totalOtherPayout;
   const afterFlyNet = worstNet;
-  const breakevenThreshold = totalSales / payMult;
+  // 亏损线修正：先扣掉平特/连肖这些固定赔付，剩下的钱才够特号赔；除以赔率就是单号最多能压的数
+  const breakevenThreshold = Math.max(0, ((typeof keptCash === 'number' ? keptCash : totalSales) - ptePayout - lxPayout) / (payMult || 1));
   h += `<div style="margin-top:8px;padding:10px;background:#fff;border:1px solid #eee;border-radius:8px;font-size:14px;line-height:1.6">`;
   // 飞单清单折叠预览
-  h += `<div onclick="var e=document.getElementById('flyListPreview');e.style.display=e.style.display==='none'?'':'none'" style="padding:6px 12px;background:#f3f4f6;color:#374151;border-radius:6px;margin-top:6px;cursor:pointer;font-size:13px;font-weight:700">📄 飞单明细 ▶</div>`;
+  h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:#f3f4f6;border-radius:6px;margin-top:6px;font-size:13px">`
+    + `<div onclick="var e=document.getElementById('flyListPreview');e.style.display=e.style.display==='none'?'':'none'" style="cursor:pointer;font-weight:700;color:#374151">📄 飞单明细 ▶</div>`
+    + `<div style="color:#6b7280;white-space:nowrap">阈值 特 <b style="color:#333">${splitTakeAll||0}</b> ｜ 平 <b style="color:#333">${pteFlyTakeAll||0}</b> ｜ 连 <b style="color:#333">${lxFlyAmt||0}</b></div></div>`;
   h += `<div id="flyListPreview" style="display:none;background:#f9fafb;border-radius:6px;padding:8px;font-size:12px;line-height:1.7">`;
   const flySales = getSplitSales();
   const flyKeys = Object.keys(flySales).sort();
@@ -5778,6 +6050,10 @@ function renderRisk(){
   if(emFlyOn && emFlySales > 0){
     h += `<div style="display:flex;justify-content:space-between"><span>飞出去（二中二三中三那边赔）</span><b style="color:#cf1322">${emFlySales.toFixed(0)}</b></div>`;
   }
+  const flySum = currentFly + pteFlyAmt + lxFlyAmt + (emFlyOn ? emFlySales : 0);
+  if(flySum > 0){
+    h += `<div style="display:flex;justify-content:space-between;border-top:1px dashed #e0e0e0;margin-top:3px;padding-top:5px"><span>飞出去合计</span><b style="color:#cf1322">${flySum.toFixed(0)}</b></div>`;
+  }
   h += `<div style="display:flex;justify-content:space-between"><span>自留现金</span><b>${keptCash.toFixed(0)}</b></div>`;
   // 开奖后用实际值，否则用最坏预测
   let dSpecPayout = specialPayout, dPtePayout = ptePayout, dLxPayout = lxPayout, dNet = afterFlyNet;
@@ -5818,7 +6094,11 @@ function renderRisk(){
   h += '</div>';
   h += '</div>';
   h += '</div>';
-  box.innerHTML = h;
+    h = '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;margin-bottom:6px;background:#fff;border:1px solid #e5e5e5;border-radius:6px;font-size:13px;color:#666">'
+    + '<span>当前飞单阈值（实时）</span>'
+    + '<span style="color:#333">特号 <b>' + (splitTakeAll||0) + '</b> ｜ 平特 <b>' + (pteFlyTakeAll||0) + '</b> ｜ 连肖 <b>' + (lxFlyAmt||0) + '</b></span>'
+    + '</div>' + h;
+box.innerHTML = h;
 }
 
 function renderAll(){
@@ -6009,6 +6289,10 @@ function switchTab(name){
 }
 
 function download(filename, content, type){
+  // App（WebView）内走原生保存，浏览器里照旧用 Blob 下载
+  if(window.AndroidAi && typeof window.AndroidAi.saveFile === 'function'){
+    try{ window.AndroidAi.saveFile(filename, String(content)); return; }catch(e){}
+  }
   const blob = new Blob([content], { type });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -6063,7 +6347,7 @@ function exportBackup(){
   } catch(e){}
   // 同时弹窗显示内容+复制按钮（手机端下载经常打不开）
   const ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
   ov.innerHTML = '<div style="background:#fff;border-radius:12px;max-width:360px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">'
     + '<div style="padding:14px;font-size:16px;font-weight:700;text-align:center;color:#333;border-bottom:1px solid #eee">📦 数据备份（共'+orders.length+'单）</div>'
     + '<div style="margin:12px 12px 0;padding:10px;background:#e8f7ee;color:#16a34a;border-radius:8px;font-size:14px;font-weight:700;text-align:center;line-height:1.5">✓ 已自动存到 app 内部<br><span style="font-weight:400;font-size:12px">以后点绿色「一键恢复上次备份」即可找回，不用找文件</span></div>'
@@ -6107,6 +6391,37 @@ function importBackup(ev){
   };
   reader.readAsText(file, 'UTF-8');
 }
+// 粘贴导入：直接把备份内容粘进来，不用先存成文件（手机上传不了文件时用这个）
+function openPasteImport(){
+  var old = document.getElementById('pasteImportOv'); if(old) old.remove();
+  var ov = document.createElement('div');
+  ov.id = 'pasteImportOv';
+  ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999999;display:flex;align-items:flex-end;justify-content:center';
+  ov.innerHTML = '<div style="background:#fff;border-radius:16px 16px 0 0;max-width:420px;width:100%;max-height:92vh;overflow-y:auto;padding:18px 16px 26px;color:#333">'
+    + '<div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px">粘贴导入备份</div>'
+    + '<div style="font-size:12px;color:#888;text-align:center;margin-bottom:12px;line-height:1.6">把备份的全部内容粘进来（以 { 开头），点导入即可</div>'
+    + '<textarea id="piText" placeholder="在这里粘贴备份内容…" style="width:100%;height:190px;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:12px;box-sizing:border-box;resize:vertical;font-family:monospace;line-height:1.5"></textarea>'
+    + '<div id="piInfo" style="font-size:12px;color:#666;margin-top:8px;min-height:16px"></div>'
+    + '<div style="display:flex;gap:8px;margin-top:10px">'
+    + '<button id="piCancel" style="flex:1;padding:12px;border:1px solid #ccc;background:#fff;color:#333;border-radius:8px;font-size:15px">取消</button>'
+    + '<button id="piOk" style="flex:1;padding:12px;border:none;background:#1a1a1a;color:#fff;border-radius:8px;font-size:15px;font-weight:600">导入</button>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  ov.querySelector('#piCancel').onclick = function(){ ov.remove(); };
+  ov.querySelector('#piOk').onclick = function(){
+    var t = ov.querySelector('#piText').value || '';
+    t = t.replace(/\uFEFF/g, '').trim();
+    if(!t){ myAlert('请先粘贴备份内容'); return; }
+    // 容错：可能被包了代码块或多行说明，只取第一个 { 到最后一个 }
+    var s = t.indexOf('{'), e = t.lastIndexOf('}');
+    if(s >= 0 && e > s) t = t.slice(s, e + 1);
+    var data;
+    try { data = JSON.parse(t); }
+    catch(err){ myAlert('导入失败：内容不是有效的备份\n' + err.message); return; }
+    ov.remove();
+    applyBackup(data);
+  };
+}
 // 一键恢复app内部存的最近一次备份（不用找下载文件夹）
 function restoreLastBackup(){
   let raw = null;
@@ -6119,9 +6434,39 @@ function restoreLastBackup(){
   });
 }
 
+// 返回键/侧滑返回：先关掉最上层的弹层，没有弹层才交给系统退出
+window.__closeTopOverlay = function(){
+  try {
+    var cand = [];
+    // 记账单的遮罩是挂在容器内层的，容器本身没有高度，存在即算
+    ['billHistMask','billViewMask'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) cand.push(el);
+    });
+    ['settingsModal','helpModal','pasteImportOv'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && el.style.display !== 'none' && getComputedStyle(el).display !== 'none' && el.offsetHeight > 0) cand.push(el);
+    });
+    var ovs = document.querySelectorAll('.ai-ov');
+    for(var i=0;i<ovs.length;i++){
+      var el = ovs[i];
+      if(!document.body.contains(el)) continue;
+      if(getComputedStyle(el).display === 'none' || el.offsetHeight === 0) continue;
+      cand.push(el);
+    }
+    if(!cand.length) return 'none';
+    var top = cand[0];
+    cand.forEach(function(el){ if(parseFloat(getComputedStyle(el).zIndex||0) >= parseFloat(getComputedStyle(top).zIndex||0)) top = el; });
+    var tid = top.id;
+    if(tid === 'settingsModal'){ if(typeof closeSettings === 'function') closeSettings(); else top.style.display = 'none'; return 'closed'; }
+    if(tid === 'helpModal'){ if(typeof closeHelp === 'function') closeHelp(); else top.style.display = 'none'; return 'closed'; }
+    top.remove();
+    return 'closed';
+  } catch(e){ return 'none'; }
+};
 function myAlert(msg){
   const ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:320px;width:100%;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.2)">'
     + '<div style="padding:20px 20px 10px;font-size:16px;font-weight:700;text-align:center;color:#333">提示</div>'
     + '<div style="padding:0 20px 20px;font-size:15px;text-align:center;color:#333;line-height:1.6;white-space:pre-line">' + msg + '</div>'
@@ -6134,7 +6479,7 @@ function myAlert(msg){
 // app 内确认框（不显示网址），用法：myConfirm('确定?', () => { 确定后做的事 })
 function myConfirm(msg, onOk){
   const ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:320px;width:100%;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.2)">'
     + '<div style="padding:20px 20px 10px;font-size:16px;font-weight:700;text-align:center;color:#333">提示</div>'
     + '<div style="padding:0 20px 20px;font-size:15px;text-align:center;color:#333;line-height:1.6;white-space:pre-line">' + msg + '</div>'
@@ -6149,7 +6494,7 @@ function myConfirm(msg, onOk){
 
 function myConfirm(msg, cb){
   const ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:320px;width:100%;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.2)">'
     + '<div style="padding:20px 20px 10px;font-size:16px;font-weight:700;text-align:center;color:#333">提示</div>'
     + '<div style="padding:0 20px 20px;font-size:15px;text-align:center;color:#333;line-height:1.6">' + msg.replace(/\n/g,'<br>') + '</div>'
@@ -6165,7 +6510,7 @@ function myConfirm(msg, cb){
 // 多选项弹窗：myChoice('标题', '说明', ['选项1','选项2'], pick=>{pick为下标})
 function myChoice(title, msg, opts, cb){
   const ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
   let btns = '';
   opts.forEach((o,i)=>{ btns += '<button data-i="'+i+'" style="width:100%;padding:14px;border:none;border-top:1px solid #eee;background:#fff;font-size:16px;color:#333;font-weight:600">'+o+'</button>'; });
   ov.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:320px;width:100%;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.2)">'
@@ -6436,7 +6781,7 @@ function genStatement(){
   var text = header + '\n' + lines.join('\n');
 
   var ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:flex-end;justify-content:center';
+  ov.className = 'ai-ov'; ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:flex-end;justify-content:center';
   ov.innerHTML = '<div style="background:#fff;border-radius:20px 20px 0 0;max-width:420px;width:100%;max-height:80vh;overflow-y:auto;padding:20px">'
     + '<div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:14px">客户对账单</div>'
     + '<div style="font-size:14px;line-height:2;white-space:pre-wrap;color:#333;margin-bottom:16px">' + text + '</div>'
@@ -6581,7 +6926,7 @@ function billArchiveNow(silent){
   if(tip) tip.style.display = 'none';
   if(typeof renderAll === 'function') renderAll();
   billRefreshBar();
-  if(!silent) alert('已归档 ' + d + '：' + s.n + ' 单，收 ' + s.amt.toFixed(2) + ' 元，净 ' + s.net.toFixed(2) + '。账本已切到今天。');
+  if(!silent) myAlert('已归档 ' + d + '：' + s.n + ' 单，收 ' + s.amt.toFixed(2) + ' 元，净 ' + s.net.toFixed(2) + '。账本已切到今天。');
   return true;
 }
 
@@ -6691,7 +7036,7 @@ function billOldDayCount(){
 function billSplitOld(){
   const book = billBookDate() || billToday();
   const oldOnes = orders.filter(o => String(o.ts || o.createdAt || '').slice(0,10) < book);
-  if(!oldOnes.length){ alert('当前账本里没有早于 ' + book + ' 的订单'); return; }
+  if(!oldOnes.length){ myAlert('当前账本里没有早于 ' + book + ' 的订单'); return; }
   const days = new Set(oldOnes.map(o => String(o.ts || o.createdAt || '').slice(0,10)));
   if(!confirm('把 ' + oldOnes.length + ' 笔、跨 ' + days.size + ' 天的旧订单，按日期拆进历史账单？\n当前账本只保留 ' + book + ' 的订单。')) return;
   const groups = {};
@@ -6710,7 +7055,7 @@ function billSplitOld(){
   saveOrders(); billSaveArchive();
   if(typeof renderAll === 'function') renderAll();
   billRefreshBar(); billCloseHistory(); billOpenHistory();
-  alert('已拆分 ' + oldOnes.length + ' 笔到 ' + days.size + ' 天历史账单。');
+  myAlert('已拆分 ' + oldOnes.length + ' 笔到 ' + days.size + ' 天历史账单。');
 }
 
 function billRestore(k){
@@ -6728,7 +7073,7 @@ function billRestore(k){
   billCloseView(); billCloseHistory();
   if(typeof renderAll === 'function') renderAll();
   billRefreshBar();
-  alert('已切到 ' + k + ' 的账本。');
+  myAlert('已切到 ' + k + ' 的账本。');
 }
 
 /* 每次主界面重绘后同步顶部账单日 */
