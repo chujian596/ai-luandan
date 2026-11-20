@@ -400,7 +400,7 @@ td.cust{max-width:100px;overflow:hidden;text-overflow:ellipsis;text-align:left;w
         &nbsp;&nbsp;二中二 03,10 100　二中二:03,10 100　03,10二中二100<br>
         &nbsp;&nbsp;三中二 03,10,22 100　三中三 07,24,32 100　07,24,32三中三100<br>
         &nbsp;&nbsp;三中三:07,24,32 100　（用横杠写的 07-24-32 也会自动识别）<br>
-        &nbsp;&nbsp;<b style="color:#b45309">香港单不在这里录：切到香港分店，本店只收澳门单。</b><br><br>
+        &nbsp;&nbsp;<b style="color:#b45309">港澳可同单录：单独一行「香港：」后续整段进香港，「澳门：」切回澳门；单行写「香港牛50」也会把后面未标注行带入香港段。</b><br><br>
 
         <b style="color:var(--modalText,#fff)">⑥ 快捷批量写法</b><br>
         &nbsp;&nbsp;<b style="color:var(--modalText,#fff)">头数：</b>0头200（=01~09全买）1头100（=10~19）<br>
@@ -526,12 +526,14 @@ td.cust{max-width:100px;overflow:hidden;text-overflow:ellipsis;text-align:left;w
       <div style="font-size:14px;font-weight:600;margin:16px 0 8px;color:var(--modalText,#fff)">十一、香港分店（与澳门店同一套功能）</div>
       <div style="font-size:13px;line-height:1.9;color:var(--modalLabel,#8E8E93)">
         <b style="color:var(--modalText,#fff)">1. 怎么录</b><br>
-        &nbsp;&nbsp;顶部店铺切到「<b style="color:var(--modalText,#fff)">香港</b>」，按和澳门完全一样的格式直接录<br>
-        &nbsp;&nbsp;香港单只进香港店，澳门单只进澳门店；录错店会提示去另一家分店<br><br>
+        &nbsp;&nbsp;顶部切到「<b style="color:var(--modalText,#fff)">香港</b>」可以录；在澳门店也能直接录香港单<br>
+        &nbsp;&nbsp;单独一行「<b style="color:var(--modalText,#fff)">香港：</b>」→ 后面整段进香港；「<b style="color:var(--modalText,#fff)">澳门：</b>」→ 后面整段切回澳门<br>
+        &nbsp;&nbsp;单行写「香港牛50」也会把后续未标注行带入香港段；行尾写「…澳门」只把该行算澳门<br>
+        &nbsp;&nbsp;同一客户的澳门单和香港单在同一张客户卡合并算下注/中奖，明细仍分「澳门单目录 / 香港单目录」<br><br>
 
         <b style="color:var(--modalText,#fff)">2. 独立一池</b><br>
-        &nbsp;&nbsp;两店的订单、飞单、开奖、统计、归档、客户、对账全部<b style="color:var(--modalText,#fff)">互不串</b><br>
-        &nbsp;&nbsp;切店后只看本店数据，互不影响<br><br>
+        &nbsp;&nbsp;订单池、开奖、赔付、飞单、统计、归档仍按港澳分开存，互不串号<br>
+        &nbsp;&nbsp;客户汇总可以合并看，但每笔明细只用自己盘口的开奖计算<br><br>
 
         <b style="color:var(--modalText,#fff)">3. 香港飞单</b><br>
         &nbsp;&nbsp;和澳门<b style="color:var(--modalText,#fff)">一模一样</b>：特号 / 平特 / 连肖 / 二中二三中三逐号台账、阈值、档位、削峰、凑整、已飞、复制、确认飞单<br>
@@ -555,9 +557,9 @@ td.cust{max-width:100px;overflow:hidden;text-overflow:ellipsis;text-align:left;w
       <div style="font-size:14px;font-weight:600;margin:16px 0 8px;color:var(--modalText,#fff)">十二、分店切换（右上角）</div>
       <div style="font-size:13px;line-height:1.9;color:var(--modalLabel,#8E8E93)">
         1. 点右上角「<b style="color:var(--modalText,#fff)">澳门🇲🇴▾</b>」→ 选「香港🇭🇰」，页面自动重载<br>
-        2. <b style="color:var(--modalText,#fff)">A 店＝澳门</b>：订单池是澳门单，开奖读澳门<br>
-        3. <b style="color:var(--modalText,#fff)">B 店＝香港</b>：订单池是香港单，开奖读香港<br>
-        4. 两店数据<b style="color:var(--modalText,#fff)">互不相通</b>，切店不会串数据、也不会互相顶掉开奖记录<br>
+        2. <b style="color:var(--modalText,#fff)">A 店＝澳门</b>：默认收澳门单，带「香港」标注的行自动进香港账<br>
+        3. <b style="color:var(--modalText,#fff)">B 店＝香港</b>：默认收香港单，带「澳门」标注的行自动进澳门账<br>
+        4. 两本账分开存，但同一客户的港单和澳单会在客户卡片里合并显示<br>
         5. 分店就是这个切换，<b style="color:var(--modalText,#fff)">不用另外的网址</b>
       </div>
 
@@ -636,7 +638,7 @@ var OWNER_FP = ['780a7275fbd28a02', 'e5690e7d2be068d2'];
 function isOwnerDevice(){ try { return OWNER_FP.indexOf(fpOf(DEVICE_ID)) >= 0; } catch(e){ return false; } }
 // 设备白名单：从whitelist.json远程拉取
 // 强制版本检查
-var APP_VER = 'v59.33';
+var APP_VER = 'v59.39';
 /* ===== 可观测性：本地错误日志 + 诊断导出 ===== */
 var ERR_KEY = 'ai_err_log_v1';
 var _errMem = null;
@@ -837,36 +839,45 @@ function _verCmp(a, b){
   for(var i=0;i<3;i++){ if(x[i] !== y[i]) return x[i] > y[i] ? 1 : -1; }
   return 0;
 }
-// 三个来源同时问，取最新的那个（GitHub raw 不吃 CDN 缓存）
+// Pro 只作为显示后缀；版本比较只看数字核心，避免 v59.33 与 v59.03.45-Pro 互判
+function _verLabel(v){
+  var s = String(v||'').trim();
+  return /Pro/i.test(APP_VER) ? s : s.replace(/-Pro$/i,'');
+}
+// 唯一版本源：GitHub raw 的 version.txt；raw 不通时退回当前站点同源文件。
+// 不再把备用站/测试页的版本号一起取最大值，避免某个脏版本导致无限提示更新。
 function fetchRemoteVer(){
-  var isPro = /Pro/.test(APP_VER);
-  var verFile = isPro ? 'version.txt' : 'version-client.txt';
+  var verFile = 'version.txt';
   var urls = [
     'https://raw.githubusercontent.com/chujian596/ai-stats/main/' + verFile + '?t=' + Date.now(),
-    'https://aistats-9uo.pages.dev/' + verFile + '?t=' + Date.now(),
-    verFile + '?t=' + Date.now()
+    _siteBase().replace(/\/$/,'') + '/' + verFile + '?t=' + Date.now()
   ];
-  return Promise.all(urls.map(function(u){
-    return fetch(u, {cache:'no-store'}).then(function(r){ return r.ok ? r.text() : ''; }).catch(function(){ return ''; });
-  })).then(function(list){
-    var best = '';
-    list.forEach(function(v){
-      v = String(v||'').trim();
-      if(!/^v?\d+(\.\d+)+/.test(v)) return;
-      // 渠道校验：客户版只认不带 -Pro 的版本，专业版只认带 -Pro 的版本，防止两套版本号互相当成新版
-      if(isPro && !/Pro/i.test(v)) return;
-      if(!isPro && /Pro/i.test(v)) return;
-      if(_verCmp(v, best) > 0) best = v;
-    });
-    if(best) return best;
-    throw new Error('no version source');
-  });
+  function valid(v){
+    v = String(v||'').trim();
+    if(!/^v\d{2}\.\d+(?:\.\d+)?(?:-Pro)?$/.test(v)) return '';
+    if(/Test/i.test(v)) return '';
+    return v;
+  }
+  function next(i){
+    if(i >= urls.length) return Promise.reject(new Error('no version source'));
+    return fetch(urls[i], {cache:'no-store'})
+      .then(function(r){ return r.ok ? r.text() : ''; })
+      .then(function(t){
+        var v = valid(t);
+        if(v) return v;
+        throw new Error('bad version');
+      })
+      .catch(function(){ return next(i+1); });
+  }
+  return next(0);
 }
-function _onlineURL(){
-  // 更新只跳权威主站：旧备份站(aistats-9uo.pages.dev)可能是旧部署，跳回去会形成「新版→旧版→再提示」的死循环
+function _onlineURL(target){
+  // 更新只跳权威主站：旧备份站可能是旧部署，跳回去会形成「新版→旧版→再提示」的死循环
   var isPro = /Pro/.test(APP_VER);
   var base = 'https://chujian596.github.io/ai-stats';
-  return base + (isPro ? '/app-pro.html' : '/app.html') + '?v=' + Date.now();
+  var url = base + (isPro ? '/app-pro.html' : '/app.html') + '?v=' + Date.now();
+  if(target) url += '&target=' + encodeURIComponent(normVer(target));
+  return url;
 }
 // 手机里装的壳(file://)：先本地起，能连通就自动切到线上最新版，网页改动以后不用重装包
 (function(){
@@ -883,7 +894,11 @@ function _onlineURL(){
 // 发现新版时：跳到带版本号的网址，硬绕开浏览器缓存（普通reload会拿旧缓存）
 function hardUpdateTo(v){
   var done = false;
-  function go(){ if(done) return; done = true; location.replace(_onlineURL()); }
+  function go(){
+    if(done) return; done = true;
+    try{ localStorage.setItem('aiUpdateTarget', normVer(v)); }catch(e){}
+    location.replace(_onlineURL(v));
+  }
   // 先清 PWA / 缓存，清完再跳，最多等 1.2 秒
   var jobs = [];
   if('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations){
@@ -906,16 +921,29 @@ document.addEventListener('DOMContentLoaded', function(){
   if(s) s.textContent = APP_VER;
 });
 // 版本检查：只提示，绝不自动跳转
-fetchRemoteVer()
-  .then(function(v){
-    if(_verCmp(v, APP_VER) > 0){
-      var bar=document.createElement('div');
-      bar.style.cssText='position:fixed;top:0;left:0;right:0;background:#333;color:#fff;padding:10px;text-align:center;z-index:99999;font-size:14px;cursor:pointer';
-      bar.textContent='发现新版本 '+v+'，点这里更新';
-      bar.onclick=function(){ hardUpdateTo(v); };
-      document.body.appendChild(bar);
-    }
-  }).catch(function(){});
+(function(){
+  var pending = '';
+  try{ pending = normVer(localStorage.getItem('aiUpdateTarget') || ''); }catch(e){}
+  if(pending && _verCmp(APP_VER, pending) < 0){
+    var bar = document.createElement('div');
+    bar.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#b45309;color:#fff;padding:10px;text-align:center;z-index:99999;font-size:14px;cursor:pointer';
+    bar.textContent = '更新未生效：目标 ' + pending + '，当前 ' + APP_VER + '。点这里重试';
+    bar.onclick = function(){ hardUpdateTo(pending); };
+    document.body.appendChild(bar);
+    return;
+  }
+  if(pending){ try{ localStorage.removeItem('aiUpdateTarget'); }catch(e){} }
+  fetchRemoteVer()
+    .then(function(v){
+      if(_verCmp(v, APP_VER) > 0){
+        var bar=document.createElement('div');
+        bar.style.cssText='position:fixed;top:0;left:0;right:0;background:#333;color:#fff;padding:10px;text-align:center;z-index:99999;font-size:14px;cursor:pointer';
+        bar.textContent='发现新版本 '+_verLabel(v)+'，点这里更新';
+        bar.onclick=function(){ hardUpdateTo(v); };
+        document.body.appendChild(bar);
+      }
+    }).catch(function(){});
+})();
 // 生肖映射：号码→生肖
 var NUM2ZODIAC = {};
 [['马',[1,13,25,37,49]],['蛇',[2,14,26,38]],['龙',[3,15,27,39]],['兔',[4,16,28,40]],['虎',[5,17,29,41]],['牛',[6,18,30,42]],['鼠',[7,19,31,43]],['猪',[8,20,32,44]],['狗',[9,21,33,45]],['鸡',[10,22,34,46]],['猴',[11,23,35,47]],['羊',[12,24,36,48]]].forEach(function(z){ z[1].forEach(function(n){ NUM2ZODIAC[n] = z[0]; }); });
@@ -1510,8 +1538,8 @@ try {
 } catch(e){}
 const KEY = sk('product_stats_orders_v1');
 let storageOK = true;
-let orders = (shop === 'B') ? [] : loadOrders();  // 香港店只挂港单，历史混入的澳门单不再参与本店账
-let hkOrders = (shop === 'B') ? loadHKOrders() : [];  // 分店制：澳门店不混入香港单，香港店才加载
+let orders = loadOrders();  // 两店都加载各自账本；港单再单独进 hkOrders
+let hkOrders = loadHKOrders();  // 两店都加载港单：澳门店也能录港单，客户明细要合在一起看
 function activeOrders(){
   // 香港店 orders 与 hkOrders 指向同一批港单，合并时必须去重，避免对账/盈亏双计
   var seenIds = {}, seenSigs = {}, out = [];
@@ -1593,14 +1621,9 @@ function resolveCode(token){
 function saveOrders(){
   invalidateStats();
   try {
-    // 澳门店只保存澳门单；历史混入的港单原样保留在存储里，不再参与本店账
+    // 两本账都从内存写：澳门单 orders、香港单 hkOrders，互不覆盖
     var _hkKeep = hkOrders;
     var _macKeep = orders;
-    if(shop !== 'B'){
-      try { _hkKeep = loadHKOrders(); } catch(e){ _hkKeep = []; }
-    } else {
-      try { _macKeep = loadOrders(); } catch(e){ _macKeep = []; }
-    }
     localStorage.setItem(KEY, JSON.stringify(_macKeep.concat(_hkKeep)));
     return true;
   }
@@ -3191,7 +3214,8 @@ function cycleHKRound(){
 // 香港单赔付速算：拿到香港开奖结果后，按同一套赔率（payMult）算收/赔/净
 // 把香港开奖缓存转成和澳门 lastDraw 同形的对象，供 calcOrderWinDetail 复用
 function hkDrawObj(){
-  if(shop !== 'B') return null;
+  // 香港开奖只跟香港单走，不再看当前停在哪个店：
+  // 澳门店也能录香港单，否则会出现“香港单已保存、却显示香港开奖未录入 / 中奖0”。
   var c = hkDrawCache();
   if(!c || !c.nums || c.nums.length < 7) return null;
   return { draw: c.draw, specialNum: Number(c.nums[6]), regularNums: c.nums.slice(0,6).map(Number) };
@@ -5111,6 +5135,8 @@ function parseLine(text){
   // 折叠连续"特"、把"特号/特碼/特码"统一成"特"
   codeText = codeText.replace(/特号|特碼/g, '特');
   codeText = codeText.replace(/特{2,}/g, '特');
+  // 波色复合词顺序归一：绿波小单 → 绿波单小（产品名以「波+单双+大小」为准）
+  codeText = codeText.replace(/(红波|蓝波|绿波)\s*(大|小)\s*(单|双)/g, '$1$3$2');
   // 裸"单/双"（前面不是波色/合数）补成"单数/双数"，避免无产品可匹配
   codeText = codeText.replace(/(^|[^红蓝绿波合数黑])单(?=\s*\d|\s*$)/g, '$1单数');
   codeText = codeText.replace(/(^|[^红蓝绿波合数黑])双(?=\s*\d|\s*$)/g, '$1双数');
@@ -5572,6 +5598,13 @@ function refreshPage(){
   try { if(typeof renderSplitSide === 'function') renderSplitSide(); } catch(e){}
   var btn = document.getElementById('refreshBtn');
   if(btn) btn.textContent = '检查中…';
+  var pending = '';
+  try{ pending = normVer(localStorage.getItem('aiUpdateTarget') || ''); }catch(e){}
+  if(pending && _verCmp(APP_VER, pending) < 0){
+    if(btn) btn.textContent = '刷新';
+    myAlert('上次更新未完成：目标 ' + pending + '，当前 ' + APP_VER + '。请点顶部提示重试，或强制刷新页面。');
+    return;
+  }
   fetchRemoteVer()
     .then(function(v){
       var remote = String(v || '').trim();
@@ -5580,15 +5613,15 @@ function refreshPage(){
         if(btn) btn.textContent = '刷新';
         logErr('version', '线上 ' + remote + ' / 本地 ' + APP_VER);
         myChoice('有新版本',
-          '线上已更新到 <b>' + remote + '</b><br>你现在用的是 <b>' + APP_VER + '</b>',
+          '线上已更新到 <b>' + _verLabel(remote) + '</b><br>你现在用的是 <b>' + APP_VER + '</b>',
           ['现在更新到最新', '保持当前版本，以后不提醒', '这次先不动'],
           function(i){
             if(i === 0){
               localStorage.removeItem('aiProPinVer');
-              location.replace(_onlineURL());
+              hardUpdateTo(remote);
             } else if(i === 1){
-              localStorage.setItem('aiNoRemindVer', normVer(APP_VER));
-              myAlert('已设为不再提醒。\n新版照样会自动生效，只是不再弹窗问你要不要更新。');
+              localStorage.setItem('aiNoRemindVer', normVer(remote));
+              myAlert('已设为不再提醒这个版本。\n以后有更新的版本仍会提示一次。');
             }
           });
       } else if(btn){
@@ -6271,14 +6304,16 @@ function scanAmbigAmount(text, from){
       if(amt && flat.length) return { idx:i, kind:'zod', prefix:mm[1]||'', zods:zods, amt:amt, codes:flat, label:(mm[1]||'')+zods };
       continue;
     }
-    var wm = raw.match(/^(红波|蓝波|绿波|红|蓝|绿)(单数|双数|单|双|大数|小数|大|小)?(.*)$/);
+    var wm = raw.match(/^(红波|蓝波|绿波|红|蓝|绿)(.*)$/);
     if(wm){
-      var wtail = wm[3] || '';
+      var wtail = wm[2] || '';
       var wamt = _mxAmount(wtail);
       if(wamt){
         var wv = wm[1].indexOf('波') > -1 ? wm[1] : wm[1] + '波';
-        var sd = (wm[2] || '').replace('数',''), dx = '';
-        var canonical = wv + (sd ? (sd === '单' || sd === '双' ? sd + '数' : sd) : '');
+        // 允许「波+单双+大小」任意顺序，不能只吃一个后缀，否则绿波单小会被截成绿波单
+        var sdM = wtail.match(/单数|双数|单|双/), dxM = wtail.match(/大数|小数|大|小/);
+        var sd = sdM ? sdM[0].replace('数','') : '', dx = dxM ? dxM[0].replace('数','') : '';
+        var canonical = wv + (sd ? (sd === '单' || sd === '双' ? sd + '数' : sd) : '') + (dx || '');
         var pd = products.filter(function(p){ return p.code === canonical; })[0];
         if(!pd){
           var alt = canonical.replace(/数$/, '');
@@ -6409,6 +6444,7 @@ function doSave(overrideText){
   let text = _isOverride ? String(overrideText) : document.getElementById('input').value;
   // 混搭/多类：分号先拆行；同一行不同玩法前缀前也拆行，避免组合词互相吞并
   text = text.replace(/[；;]/g, '\n');
+  text = text.replace(/(红波|蓝波|绿波)\s*(大|小)\s*(单|双)/g, '$1$3$2');
   text = text.replace(/\s+(?=(?:特号|特肖|特马|平特|平肖|连肖|二中二|三中二|三中三|红波|蓝波|绿波|合数|头|尾))/g, '\n');
   // 生肖之间的空格先合并，避免「特肖 龙 虎 兔 各100」被当成单个肖而漏问
   var _zchars0 = '马蛇龙兔虎牛鼠猪狗鸡猴羊';
@@ -6618,7 +6654,7 @@ function doSave(overrideText){
           // 只有明确写了"各号"或"各数"才不弹窗
           // 只看含波色的那一行，避免别行的「各」把这一行的问询吞掉
           const _waveLine = String(text).split('\n').filter(l => /红波|蓝波|绿波|红|蓝|绿/.test(l))[0] || '';
-          const hasExplicit = /各\s*(号|数|码)|每\s*(号|个号|码)/.test(_waveLine);
+          const hasExplicit = /各\s*(号|数|码|\d)|每\s*(号|个号|码)/.test(_waveLine);
           if(hasExplicit){
             text = text.replace(/(?:红波|蓝波|绿波|红|蓝|绿|单数|双数|单|双|大数|小数|大|小|合数单|合数双)+/g, canonical);
           } else if(PARSE_DEFAULTS.waveAmount){
@@ -6649,9 +6685,7 @@ function doSave(overrideText){
         // 已经选了，替换文本中的产品名
         if(window._waveChoice && window._waveCanonical){
           // 把识别到的组件替换成标准名
-          text = text.replace(/(?:红波|蓝波|绿波|红|蓝|绿|单数|双数|单|双|大数|小数|大|小|合数单|合数双|各)+/g, function(m){
-            // 保留"各"
-            if(m==='各') return m;
+          text = text.replace(/(?:红波|蓝波|绿波|红|蓝|绿|单数|双数|单|双|大数|小数|大|小|合数单|合数双)+/g, function(m){
             return window._waveCanonical;
           });
           const _wcChoice = window._waveChoice;
@@ -6666,7 +6700,8 @@ function doSave(overrideText){
               text = text.replace(_wre, function(m, amt){ return wc + '各' + (parseFloat(amt)/_wn).toFixed(4); });
             }
           } else if(window._waveLastPerNum){
-            text = text.replace(wc, wc+'各');
+            // 已经写了「各10」就不要再补一个「各」，否则会变成「红波各各10」解析失败
+            if(!new RegExp(wc + '\\s*各').test(text)) text = text.replace(wc, wc+'各');
             window._waveLastPerNum = false;
           }
         }
@@ -6745,7 +6780,7 @@ function doSave(overrideText){
       // 「每/注/码/只」也是单位词；三位数以上一定是金额（如 100/120/500），不参与 4 位拆解
       var _hasZod = /[马蛇龙兔虎牛鼠猪狗鸡猴羊特平连复各每注码只]/.test(_t);
       var _hasBigNum = /\d{3,}/.test(_t.replace(/『P\d+』/g, ''));
-      if(_nums && _nums.length === 4 && !_hasZod && !_hasBigNum && _t.indexOf('/') < 0 && !window.__skipPair && typeof myChoice === 'function' && !/三中三|二中二|三中二/.test(_t)){
+      if(_nums && _nums.length === 4 && !_hasZod && !_hasBigNum && _t.indexOf('/') < 0 && !window.__skipPair && !/[，,]/.test(_t) && typeof myChoice === 'function' && !/三中三|二中二|三中二/.test(_t)){
         var _a1=_nums[0],_a2=_nums[1],_a3=_nums[2],_a4=_nums[3];
         window.__ambigAbort = true;
           warnBatchNotSaved();
@@ -6767,7 +6802,7 @@ function doSave(overrideText){
         });
         return;
       }
-      if(_nums && _nums.length === 4 && !_hasZod && _t.indexOf('/') < 0 && !/三中三|二中二|三中二/.test(_t)){
+      if(_nums && _nums.length === 4 && !_hasZod && _t.indexOf('/') < 0 && !/[，,]/.test(_t) && !/三中三|二中二|三中二/.test(_t)){
         var _positions = [];
         var _re2 = /\d{1,2}/g; var _mm;
         while((_mm = _re2.exec(_t)) !== null) _positions.push({i:_mm.index, l:_mm[0].length});
@@ -6783,6 +6818,12 @@ function doSave(overrideText){
     var _mix = text, _keepMix = [];
     // 组合码里的逗号必须保护：带冒号的，以及「二中二03,10」这种没写冒号的裸组合
     _mix = _mix.replace(/(二中二|三中三|三中二)[ \t]*:?[ \t]*([0-9]{2}(?:[ \t]*,[ \t]*[0-9]{2}){1,2})/g, function(m, p, n){ _keepMix.push(m); return '§' + (_keepMix.length-1) + '§'; });
+    // 纯号码列表后面的「各/每」要先保护：18,30,42各20 是一个号码组，
+    // 不是三笔订单，不能按逗号拆成 18 / 30 / 42各20。
+    _mix = _mix.replace(/(\d{1,2}(?:[ \t]*[,，][ \t]*\d{1,2})+)[ \t]*(?:各|每)(?:[ \t]*(?:号|数|码|个|肖))?/g, function(m){ _keepMix.push(m); return '§' + (_keepMix.length-1) + '§'; });
+    // 没写「各」的纯号码组也要保护：18,30,42 20 是一个待确认的号码组，
+    // 先保留给解析器弹「各号/共号」，不要按逗号拆成三行。
+    _mix = _mix.replace(/(\d{1,2}(?:[ \t]*[,，][ \t]*\d{1,2})+)[ \t]+([0-9]+(?:\.[0-9]+)?)(?=[ \t]*(?:$|\n))/g, function(m){ _keepMix.push(m); return '§' + (_keepMix.length-1) + '§'; });
     _mix = _mix.replace(/[，,]+/g, '\n');
     _mix = _mix.replace(/§(\d+)§/g, function(m, i){ return _keepMix[parseInt(i)]; });
     rawLines = _mix.split(/[\r\n。；;]+/);
@@ -6790,14 +6831,9 @@ function doSave(overrideText){
   window.__skipPair = false;
   const lines = rawLines.map(s => s.trim()).filter(Boolean);
   if(lines.length === 0){ myAlert('请先粘贴订单内容'); return; }
-  // 分店制：澳门店只收澳门单，香港店只收香港单，互不混入
-  if(shop === 'A'){
-    var _hkBad = lines.filter(function(l){ return isHKLine(l); })[0];
-    if(_hkBad){ myAlert('香港单请到香港分店录入。\n本店只收澳门单：' + _hkBad); return; }
-  } else {
-    var _macBad = lines.filter(function(l){ return /^(澳门|澳)\s*/.test(String(l).trim()); })[0];
-    if(_macBad){ myAlert('澳门单请到澳门分店录入。\n本店只收香港单：' + _macBad); return; }
-  }
+  // 分店制：未标前缀的行按当前店铺入账；明确写了「香港/澳门」的行按前缀自动分盘，
+  // 不再因为当前停在澳门店就把「香港牛50」整批拦掉。
+  // 这样澳门店也能直接粘香港单，香港店也能直接粘澳门单，账本仍然分开。
 
   // 自动合并：如果一行是"各X"价格，上一行没有价格，合并成一行
   const mergedLines = [];
@@ -6815,7 +6851,9 @@ function doSave(overrideText){
     // 去掉"新澳"等前缀和尾部顿号
     ln = ln.replace(/^新澳/, '').replace(/[、，,]\s*$/, '').trim();
     if(/^(共|合计)/.test(ln)) continue;
-    if(!/\d/.test(ln) && !/[马蛇龙兔虎牛鼠猪狗鸡猴羊]/.test(ln) && !/三中三|二中二|三中二/.test(ln)) continue;
+    // 分段标题不是号码行，但它决定后面整段的盘口，必须保留到 workLines
+    var _isSecHeadLine = /^(香港|港|澳门|澳)\s*[:：]?\s*$/.test(ln);
+    if(!_isSecHeadLine && !/\d/.test(ln) && !/[马蛇龙兔虎牛鼠猪狗鸡猴羊]/.test(ln) && !/三中三|二中二|三中二/.test(ln)) continue;
     // 混合订单拆分：金额(>49)后面紧跟生肖时，自动断行
     ln = ln.replace(/(\d{2,}(?:\.\d+)?)\s*(?=[马蛇龙兔虎牛鼠猪狗鸡猴羊])/g, function(m, num){
       return parseFloat(num) > 49 ? num + '\n' : m;
@@ -6891,8 +6929,18 @@ renderAll();
       return ln;
     }).filter(x=>x!==null);
   }
+  let _secHK = (typeof shop !== 'undefined' && shop === 'B');  // 「香港：」标题后，后续行默认进香港，直到出现「澳门：」
   workLines.forEach((line, i) => {
+    // 前一行已经弹了待确认框：先停住，等用户选完由回调重新 doSave 再继续，
+    // 避免一张单里同时弹出多个选择框，用户不知道该先答哪个。
+    if(window.__ambigAbort) return;
     const trimmed = line.trim();
+    // 分段标题：单独一行「香港」「香港：」「澳门」「澳门：」只切换盘口，不参与号码解析
+    const _secHead = trimmed.match(/^(香港|港|澳门|澳)\s*[:：]?\s*$/);
+    if(_secHead){
+      _secHK = /^(香港|港)$/.test(_secHead[1]);
+      return;
+    }
     // 如果本行只有产品名（三中三/二中二/三中二），暂存等后续行；允许前面带香港/澳门
     var _pm = trimmed.match(/^(香港|澳门|澳|港)?\s*(三中三|二中二|三中二)\s*(复式?)?[:：\s]*$/);
     if(_pm){
@@ -6907,13 +6955,19 @@ renderAll();
     }
     // 合并后统一归一化组合码，避免号码里的逗号、横杠被后面的逻辑拆散
     line = normalizeComboLine(line);
-    // 先记下这行有没有写「澳门」标注（后面判断店铺默认要用），再把标注剥掉
-    const _hadMacTag = /^(澳门|澳)/.test(String(line).trim());
-    // 行首「澳门/澳」只是标注，澳门本来就是默认池，落库前剥掉，避免同一种单显示成两种写法
-    if(!isHKLine(line)) line = line.trim().replace(/^(澳门|澳)\s*/, '');
+    // 行首/行尾的港澳标注：标注只决定这一行的盘口，同时把后续未标注行带到同一段
+    const _leadHK = /^(香港|港)\s*[^:：\s]/.test(trimmed);
+    const _leadMac = /^(澳门|澳)\s*[^:：\s]/.test(trimmed) || /[\s（(]\s*(澳门|澳)\s*$/.test(trimmed);
+    const _trailHK = /[\s（(]\s*(香港|港)\s*$/.test(trimmed);
+    if(_leadHK) _secHK = true;
+    if(_leadMac) _secHK = false;
+    const _hadMacTag = _leadMac;
     try {
-      // 香港店里不带标记的行默认算港单（写了「澳门/澳」的仍算澳门单）
-      const _isHK = isHKLine(line) || (typeof shop !== 'undefined' && shop === 'B' && !_hadMacTag);
+      // 分段标题优先，其次看本行港澳标注；澳门店里没标注的行默认算澳门单
+      const _isHK = _leadHK || (!_leadMac && (_trailHK || _secHK)) || (typeof shop !== 'undefined' && shop === 'B' && !_hadMacTag);
+      if(!_isHK){
+        line = line.trim().replace(/^(澳门|澳)\s*/, '').replace(/[\s:：]*(澳门|澳)\s*$/, '').trim();
+      }
       const r = parseLine(_isHK ? stripHKMark(line) : line);
       if(r){
         // 裸复式没写「各」：金额是每组还是总共，必须先问清
@@ -6942,37 +6996,55 @@ renderAll();
           }
           r.isPer = (_sel === 'per');
         }
-        // 裸号码歧义：没写"各"、全是2位号、有末尾金额时弹确认（不管金额大小）
+        // 裸号码/裸生肖歧义：没写“各/共”，有末尾金额时弹确认。
+        // 选择结果按「原行+金额+号码」记住，重新解析时不再重复弹，避免同一条无限循环。
         const allBareNums = !window.__skipAmbig && r.codes.length >= 2 && !r.isPer && r.price > 0 && r.codes.every(c=>/^\d{2}$/.test(c));
-        if(allBareNums && PARSE_DEFAULTS.bareNumAmount === 'perNum'){
-          r.isPer = true;
-        } else if(allBareNums){
-          window.__ambigAbort = true;
-          warnBatchNotSaved();
-          var _codes = r.codes.join(' ');
-          var _price = r.price;
-          var _n = r.codes.length;
-          var _digits = line.replace(/[^\d]/g,'');
-          myChoice('这串怎么算？', _codes + ' 共'+_price+'元？怎么分？', ['各'+_price+'元（每个号）','共'+_price+'元（'+_n+'个号分）','重新编辑'], function(pick){
-            if(pick===0){
-              var inp = document.getElementById('input');
-              var outLines = inp.value.split(/\r?\n/).map(function(l){
-                if(l.replace(/[^\d]/g,'') === _digits){
-                  return l.replace(/(\d+)(?!.*\d)/, '各号$1');
+        if(allBareNums){
+          const _bareKey = line.trim()+'|'+r.price+'|'+r.codes.join(',');
+          const _bareSel = (window.__bareNumsChoice || {})[_bareKey];
+          if(_bareSel){
+            r.isPer = (_bareSel === 'per');
+          } else if(PARSE_DEFAULTS.bareNumAmount === 'perNum'){
+            r.isPer = true;
+          } else {
+            window.__ambigAbort = true;
+            warnBatchNotSaved();
+            var _codes = r.codes.join(' ');
+            var _price = r.price;
+            var _n = r.codes.length;
+            var _digits = line.replace(/[^\d]/g,'');
+            var _zLine = String(line).replace(/^(香港|澳门|澳|港)\s*/, '');
+            var _zM = _zLine.match(/^([马蛇龙兔虎牛鼠猪狗鸡猴羊])\s*([0-9]+(?:\.[0-9]+)?)\s*$/);
+            var _zName = _zM ? _zM[1] : '';
+            var _title = _zName ? ('「'+_zName+'」'+_price+'怎么算？') : '这串怎么算？';
+            var _msg = _zName
+              ? ('是整肖'+_zName+'共'+_price+'元（'+_n+'个号分），还是每个号'+_price+'元？')
+              : (_codes + ' 共'+_price+'元？怎么分？');
+            myChoice(_title, _msg,
+              _zName ? ['整肖共'+_price+'元（'+_n+'个号分）','每号'+_price+'元（'+_n+'个号×'+_price+'='+(_n*_price)+'元）','重新编辑']
+                     : ['各'+_price+'元（每个号）','共'+_price+'元（'+_n+'个号分）','重新编辑'],
+              function(pick){
+                if(pick===2){ window.__ambigAbort=false; return; }
+                window.__bareNumsChoice = window.__bareNumsChoice || {};
+                // 生肖弹窗：0=整肖共，1=每号；号码弹窗：0=各号，1=共
+                window.__bareNumsChoice[_bareKey] = _zName ? (pick===0?'total':'per') : (pick===0?'per':'total');
+                window.__ambigAbort = false;
+                var _needPer = _zName ? (pick===1) : (pick===0);
+                if(_needPer){
+                  var inp = document.getElementById('input');
+                  var outLines = inp.value.split(/\r?\n/).map(function(l){
+                    if(l.replace(/[^\d]/g,'') === _digits){
+                      return l.replace(/(\d+)(?!.*\d)/, '各号$1');
+                    }
+                    return l;
+                  });
+                  inp.value = outLines.join('\n');
                 }
-                return l;
+                // 这里必须是 doSave，不是 handleSave：否则同一批会被判成“3分钟内重复”再弹一次确认
+                doSave();
               });
-              inp.value = outLines.join('\n');
-              window.__skipAmbig = true;
-              handleSave();
-              window.__skipAmbig = false;
-            } else if(pick===1){
-              window.__skipAmbig = true;
-              handleSave();
-              window.__skipAmbig = false;
-            }
-          });
-          return;
+            return;
+          }
         }
         parsed.push({ raw: line, codes: r.codes, price: r.price, isPer: r.isPer, hk: _isHK });
         lastPrice = r.price; lastIsPer = r.isPer;
@@ -7205,6 +7277,7 @@ renderAll();
   restoreIfNeeded();
 renderAll();
   switchTab('orders');
+  window.__bareNumsChoice = {};
   setTimeout(() => { try{ autoStableAfterSave(); }catch(e){} }, 350);
   setTimeout(() => { try{ focusOrderById(window.__lastSavedOrderId); }catch(e){} }, 80);
   // 保存后自动展开平特肖列表
@@ -7287,6 +7360,7 @@ function updateCustLabel(){
 function clearInput(){
   document.getElementById('input').value = '';
   document.getElementById('saveMsg').textContent = '';
+  window.__bareNumsChoice = {};
 }
 
 function selectCustomer(name){
